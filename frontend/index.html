@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stark Proofreader - Premium Word Document AI Proofreader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23C41E3A'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8' stroke='%23B4944C' stroke-width='2' fill='none'/></svg>">
+  <link rel="stylesheet" href="/static/style.css?v=stark3.0">
+</head>
+<body class="theme-light">
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="brand-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">Stark Proofreader<span class="brand-dot">.</span></span>
+        <span class="brand-subtitle">Powered by Stark Premium • Enterprise Word AI</span>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <div id="apiKeyStatus" class="status-badge status-checking">
+        <span class="status-dot"></span>
+        <span class="status-text">Checking API...</span>
+      </div>
+      
+      <button id="btnSettings" class="btn btn-secondary btn-icon" title="Configure API Key & Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>API Key</span>
+      </button>
+
+      <button id="themeToggle" class="btn btn-secondary btn-icon" title="Toggle Light/Dark Theme">
+        <svg id="themeIconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+    <!-- VIEW 1: UPLOAD STAGE -->
+    <section id="uploadSection" class="view-panel active">
+      <div class="hero-header">
+        <div class="hero-badge">Stark Premium Document Intelligence</div>
+        <h1 class="hero-title">Polish your Word documents to perfection<span class="brand-dot">.</span></h1>
+        <p class="hero-desc">
+          Upload any Microsoft Word (<code>.docx</code>) presentation or report. Our AI engine detects grammar, spelling, double spaces, and missing punctuation. Evident errors and typos are automatically corrected while protecting your branding, titles, and layout.
+        </p>
+      </div>
+
+      <div class="upload-card">
+        <!-- Drag & Drop Zone -->
+        <div id="dropZone" class="drop-zone">
+          <input type="file" id="fileInput" accept=".docx" class="file-input-hidden">
+          <div class="drop-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <div class="drop-prompt">
+            <span class="drop-primary">Choose a Word document</span> or drag & drop here
+          </div>
+          <div class="drop-info">Supports .docx files up to 25 MB</div>
+          <div id="selectedFileInfo" class="selected-file-pill hidden">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            </svg>
+            <span id="selectedFileName">filename.docx</span>
+            <button id="btnRemoveFile" class="btn-remove-file" title="Remove file">&times;</button>
+          </div>
+        </div>
+
+        <!-- Options row -->
+        <div class="upload-options">
+          <div class="option-group">
+            <label for="toneSelect" class="option-label">Proofreading Tone & Style:</label>
+            <select id="toneSelect" class="select-input">
+              <option value="business" selected>Business Professional (Recommended)</option>
+              <option value="concise">Executive & Concise (Direct & Crisp)</option>
+              <option value="strict">Strict Grammar & Spelling (No tone changes)</option>
+              <option value="formal">Formal & Academic (High rigor)</option>
+              <option value="casual">Friendly & Approachable</option>
+            </select>
+          </div>
+
+          <div class="option-actions">
+            <button id="btnLoadSample" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <path d="M14 2v6h6"></path>
+              </svg>
+              <span>Try with Sample Report</span>
+            </button>
+            <button id="btnStartAnalysis" class="btn btn-primary" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <span>Scan & Check Document</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Highlights -->
+      <div class="features-grid">
+        <div class="feature-item">
+          <div class="feature-icon icon-review">✓</div>
+          <div class="feature-title">Human-in-the-Loop</div>
+          <div class="feature-desc">You are always in control. Review each suggestion individually or in bulk before any change is applied.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon icon-format">📄</div>
+          <div class="feature-title">Preserves Word Formatting</div>
+          <div class="feature-desc">Fonts, headings, bold, italics, tables, and spacing stay intact without scrambling document styles.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon icon-team">👥</div>
+          <div class="feature-title">Ready for Teammates</div>
+          <div class="feature-desc">Zero software installation for your team. Share the network link or run locally in any browser.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+      <div class="loading-card">
+        <div class="spinner"></div>
+        <h3 id="loadingTitle">Fast AI Proofreading...</h3>
+        <p id="loadingMsg">Extracting text blocks and checking with Gemini High-Speed AI...</p>
+      </div>
+    </div>
+
+    <!-- VIEW 2: INTERACTIVE REVIEW WORKSPACE -->
+    <section id="reviewSection" class="view-panel">
+      <!-- Review Toolbar -->
+      <div class="review-toolbar">
+        <div class="doc-meta">
+          <button id="btnBackToUpload" class="btn btn-secondary btn-sm" title="Upload another document">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back</span>
+          </button>
+          <span id="reviewDocName" class="doc-title-pill">Quarterly_Report.docx</span>
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="filter-chips">
+          <button class="chip active" data-filter="needs_review">Needs Review <span id="countNeedsReview" class="chip-count chip-count-amber">0</span></button>
+          <button class="chip" data-filter="auto_accepted">Auto-Corrected <span id="countAutoAccepted" class="chip-count chip-count-green">0</span></button>
+          <button class="chip" data-filter="all">All <span id="countAll" class="chip-count">0</span></button>
+          <button class="chip" data-filter="spelling">Spelling <span id="countSpelling" class="chip-count">0</span></button>
+          <button class="chip" data-filter="grammar">Grammar <span id="countGrammar" class="chip-count">0</span></button>
+          <button class="chip" data-filter="spacing">Spacing & Punctuation <span id="countSpacing" class="chip-count">0</span></button>
+          <button class="chip" data-filter="clarity">Style & Clarity <span id="countClarity" class="chip-count">0</span></button>
+        </div>
+
+        <!-- Bulk Review Actions -->
+        <div class="toolbar-bulk-actions">
+          <button id="btnAcceptAll" class="btn btn-outline-success btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Accept All</span>
+          </button>
+          <button id="btnRejectAll" class="btn btn-outline-danger btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>Reject All</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Smart Summary Banner -->
+      <div id="autoAcceptBanner" class="smart-banner">
+        <div class="banner-icon">✨</div>
+        <div class="banner-text">
+          <strong id="bannerAutoCount">0 spelling & evident grammar errors</strong> were automatically corrected for you. 
+          <span id="bannerPendingText">0 suggestions need your review.</span>
+        </div>
+        <div class="banner-actions">
+          <button id="btnViewPendingOnly" class="btn btn-secondary btn-sm">Review Pending Only</button>
+          <button id="btnAcceptAllRemaining" class="btn btn-primary btn-sm">Accept Remaining & Download</button>
+        </div>
+      </div>
+
+      <!-- Split Screen Workspace -->
+      <div class="workspace-grid">
+        <!-- Left Column: Document View with in-context highlights -->
+        <div class="doc-view-panel">
+          <div class="panel-header">
+            <h3>Document Preview</h3>
+            <span class="panel-hint">Click on any highlighted issue to view its correction</span>
+          </div>
+          <div id="docViewer" class="doc-content-scroll">
+            <!-- Dynamic document paragraphs rendered here -->
+          </div>
+        </div>
+
+        <!-- Right Column: Interactive Suggestion Cards -->
+        <div class="suggestions-panel">
+          <div class="panel-header">
+            <h3>Corrections & Suggestions</h3>
+            <div class="decision-summary">
+              <span id="acceptedCountBadge" class="badge-accepted">0 Accepted</span>
+              <span id="rejectedCountBadge" class="badge-rejected">0 Rejected</span>
+              <span id="pendingCountBadge" class="badge-pending">0 Pending</span>
+            </div>
+          </div>
+
+          <div id="suggestionsList" class="suggestions-list-scroll">
+            <!-- Dynamic suggestion cards rendered here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Sticky Bottom Action Footer -->
+      <div class="review-footer">
+        <div class="footer-progress">
+          <div class="progress-info">
+            <span id="progressSummary">0 of 0 reviewed</span>
+            <span id="applyCountSummary" class="text-highlight">0 corrections ready to apply</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="progressBar" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="footer-actions">
+          <button id="btnApplyAndDownload" class="btn btn-success btn-lg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Apply Corrections & Download (.docx)</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Settings / API Key Modal -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Gemini API Configuration</h2>
+        <button id="btnCloseModal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">
+          DocProofreader uses Google Gemini High-Speed AI for state-of-the-art context-aware grammar, spelling, and executive phrasing checks.
+        </p>
+
+        <div class="form-group">
+          <label for="inputApiKey">Google Gemini API Key:</label>
+          <div class="input-with-button">
+            <input type="password" id="inputApiKey" placeholder="Paste your AI Studio API key (AIzaSy...)" class="text-input">
+            <button id="btnToggleKeyVis" class="btn btn-secondary btn-sm" type="button" title="Show/Hide Key">👁️</button>
+          </div>
+          <small class="form-hint">
+            Stored locally in your browser. Teammates can also provide their own key or you can set <code>GEMINI_API_KEY</code> in the server's <code>.env</code> file.
+          </small>
+        </div>
+
+        <div class="key-test-feedback hidden" id="keyTestResult"></div>
+
+        <div class="modal-tips">
+          <div class="tip-title">Need a free Gemini API key?</div>
+          <ol class="tip-steps">
+            <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a>.</li>
+            <li>Click <strong>Get API key</strong> and copy it.</li>
+            <li>Paste it here and click <strong>Test & Save</strong>.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnTestKey" class="btn btn-secondary">Test Connection</button>
+        <button id="btnSaveKey" class="btn btn-primary">Save Key</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=stark3.0"></script>
+</body>
+</html>

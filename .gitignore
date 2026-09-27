@@ -1,0 +1,10 @@
+venv/
+.env
+__pycache__/
+*.pyc
+sessions_cache/
+sample_docs/
+*.docx
+*.log
+.vscode/
+.idea/

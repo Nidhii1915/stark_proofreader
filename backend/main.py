@@ -98,8 +98,8 @@ async def serve_index():
 
 @app.get("/api/config")
 async def get_config():
-    """Checks whether the server has a GEMINI_API_KEY preconfigured in .env."""
-    has_key = bool(os.getenv("GEMINI_API_KEY"))
+    raw = os.getenv("GEMINI_API_KEY", "").strip().strip("'\"")
+    has_key = bool(raw and len(raw) > 20 and raw != "GEMINI_API_KEY" and not raw.startswith("your_"))
     return {
         "has_server_key": has_key,
         "default_model": "gemini-3.5-flash-lite"

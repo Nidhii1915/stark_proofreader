@@ -182,7 +182,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // =========================================================================
   // Upload Stage: Drag & Drop and File Selection
-  // =========================================================================
+  dropZone.addEventListener('click', (e) => {
+    if (e.target !== fileInput && !e.target.closest('#btnRemoveFile')) {
+      fileInput.click();
+    }
+  });
 
   dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -288,7 +292,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({ detail: resp.statusText }));
-        throw new Error(errorData.detail || 'Analysis request failed');
+        const msg = errorData.detail || 'Analysis request failed';
+        if (msg.includes('API key') || msg.includes('API_KEY_INVALID') || msg.includes('INVALID_ARGUMENT')) {
+          hideLoading();
+          settingsModal.classList.remove('hidden');
+          showKeyTestFeedback('Your Gemini API Key is missing or invalid. Please paste your valid key below and click "Save Key".', false);
+          return;
+        }
+        throw new Error(msg);
       }
 
       const result = await resp.json();

@@ -236,48 +236,50 @@ async def apply_corrections(req: ApplyRequest):
 @app.get("/api/sample-doc")
 async def get_sample_document():
     """Generates and returns a sample .docx document containing typical business report mistakes."""
-    sample_path = SAMPLE_DOCS_DIR / "Sample_Business_Report.docx"
-    if not sample_path.exists():
-        # Create a sample document with realistic mistakes
-        doc = Document()
-        doc.add_heading("Quarterly Performance and Strategic Review", level=0)
-        
-        p1 = doc.add_paragraph("This report summarize the operational achievemnts  and financial metrics for Q3 2026.Our team has work hard to deliver results across all major client accounts,without delay.")
-        
-        doc.add_heading("Key Milestones and Outcomes", level=1)
-        p2 = doc.add_paragraph("There is several  key factors that contributed to our sucess. First, the new software "
-                               "infastructure was deployed without any major delays .Second, our customer retention rate "
-                               "have increased significantly due to pro-active client communication.")
-        
-        p3 = doc.add_paragraph("However, their was a unexpected drop in enterprise sales during August due to seasonal "
-                               "fluctuations and budget constraint among prospective clients.")
-        
-        doc.add_heading("Financial Summary", level=1)
-        table = doc.add_table(rows=1, cols=3)
-        hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = "Department"
-        hdr_cells[1].text = "Budget Allocated"
-        hdr_cells[2].text = "Remarks"
-        
-        row1 = table.add_row().cells
-        row1[0].text = "Engineering & Product"
-        row1[1].text = "$1,200,000"
-        row1[2].text = "Deliverd all roadmap items on scedule."
-        
-        row2 = table.add_row().cells
-        row2[0].text = "Marketing & Sales"
-        row2[1].text = "$850,000"
-        row2[2].text = "Lead generation were higher then expected."
+    doc = Document()
+    doc.add_heading("Title: Stark Premium Strategic & Performance Review", level=0)
+    
+    doc.add_paragraph("This report summarize the operational achievemnts  and financial metrics for Q3 2026.Our team has work hard to deliver results across all major client accounts,without delay.")
+    
+    doc.add_heading("Key Milestones and Outcomes", level=1)
+    doc.add_paragraph("There is several  key factors that contributed to our sucess. First, the new software "
+                      "infastructure was deployed without any major delays .Second, our customer retention rate "
+                      "have increased significantly due to pro-active client communication.")
+    
+    doc.add_paragraph("However, their was a unexpected drop in enterprise sales during August due to seasonal "
+                      "fluctuations and budget constraint among prospective clients.")
+    
+    doc.add_heading("Financial Summary", level=1)
+    table = doc.add_table(rows=1, cols=3)
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = "Department"
+    hdr_cells[1].text = "Budget Allocated"
+    hdr_cells[2].text = "Remarks"
+    
+    row1 = table.add_row().cells
+    row1[0].text = "Engineering & Product"
+    row1[1].text = "$1,200,000"
+    row1[2].text = "Deliverd all roadmap items on scedule."
+    
+    row2 = table.add_row().cells
+    row2[0].text = "Marketing & Sales"
+    row2[1].text = "$850,000"
+    row2[2].text = "Lead generation were higher then expected."
 
-        doc.add_heading("Recommendations for Q4", level=1)
-        p4 = doc.add_paragraph("In order to ensure that we meet our year end target, its critical that all department heads "
-                               "collaborate closely. We should also prioritize automated proofreading to avoid embarrassing "
-                               "typos in executive presenations and proposals.")
+    doc.add_heading("Recommendations for Q4", level=1)
+    doc.add_paragraph("In order to ensure that we meet our year end target, its critical that all department heads "
+                      "collaborate closely. We should also prioritize automated proofreading to avoid embarrassing "
+                      "typos in executive presenations and proposals.")
 
-        doc.save(str(sample_path))
+    bio = io.BytesIO()
+    doc.save(bio)
+    bio.seek(0)
 
-    return FileResponse(
-        path=str(sample_path),
-        filename="Sample_Business_Report.docx",
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    return StreamingResponse(
+        bio,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={
+            "Content-Disposition": 'attachment; filename="Sample_Business_Report.docx"',
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
     )

@@ -149,7 +149,11 @@ async def analyze_document(
         raise HTTPException(status_code=400, detail="Only Microsoft Word (.docx) documents are supported.")
 
     # Determine effective API key
-    effective_key = (api_key.strip() if api_key and api_key.strip() else None) or os.getenv("GEMINI_API_KEY")
+    env_key = os.getenv("GEMINI_API_KEY")
+    if env_key:
+        env_key = env_key.strip().strip("'\"")
+    user_key = api_key.strip().strip("'\"") if api_key and api_key.strip() else None
+    effective_key = user_key or env_key
     if not effective_key:
         raise HTTPException(
             status_code=400,

@@ -1,5 +1,6 @@
 /**
- * DocProofreader AI - Client Application Logic
+ * Stark Proofreader AI - Executive Classy Edition
+ * Dual-Pane Wordvice AI Layout & Document Intelligence
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -11,77 +12,75 @@ document.addEventListener('DOMContentLoaded', () => {
   let decisions = {}; // issue_id -> { accepted: bool, rejected: bool, editedText: string }
   let currentFilter = 'all';
   let serverHasKey = false;
+  let currentActiveIssueId = null;
 
-  // DOM Elements - Navigation & Theme
-  const authStatusBadge = document.getElementById('authStatusBadge');
-  const btnLockSession = document.getElementById('btnLockSession');
-  const apiKeyStatus = document.getElementById('apiKeyStatus');
-  const btnSettings = document.getElementById('btnSettings');
+  // DOM Elements - Shell & Sidebar
+  const appSidebar = document.getElementById('appSidebar');
+  const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+  const navProofread = document.getElementById('navProofread');
+  const navDocMode = document.getElementById('navDocMode');
+  const navQuickPaste = document.getElementById('navQuickPaste');
+  const btnSettingsNav = document.getElementById('btnSettingsNav');
+  const btnRulesNav = document.getElementById('btnRulesNav');
   const themeToggle = document.getElementById('themeToggle');
-  const settingsModal = document.getElementById('settingsModal');
-  const btnCloseModal = document.getElementById('btnCloseModal');
-  const inputApiKey = document.getElementById('inputApiKey');
-  const btnToggleKeyVis = document.getElementById('btnToggleKeyVis');
-  const btnTestKey = document.getElementById('btnTestKey');
-  const btnSaveKey = document.getElementById('btnSaveKey');
-  const keyTestResult = document.getElementById('keyTestResult');
+  const btnLockSession = document.getElementById('btnLockSession');
+  const sidebarApiKeyDot = document.getElementById('sidebarApiKeyDot');
 
-  // DOM Elements - Views
-  const loginSection = document.getElementById('loginSection');
-  const loginForm = document.getElementById('loginForm');
-  const inputPasscode = document.getElementById('inputPasscode');
-  const btnTogglePasscodeVis = document.getElementById('btnTogglePasscodeVis');
-  const passcodeEyeIcon = document.getElementById('passcodeEyeIcon');
-  const btnUnlock = document.getElementById('btnUnlock');
-  const loginFeedback = document.getElementById('loginFeedback');
-  const uploadSection = document.getElementById('uploadSection');
-  const reviewSection = document.getElementById('reviewSection');
-  const loadingOverlay = document.getElementById('loadingOverlay');
-  const loadingTitle = document.getElementById('loadingTitle');
-  const loadingMsg = document.getElementById('loadingMsg');
+  // DOM Elements - Topbar
+  const activeDocTag = document.getElementById('activeDocTag');
+  const activeDocTitle = document.getElementById('activeDocTitle');
+  const btnLoadSample = document.getElementById('btnLoadSample');
+  const apiKeyStatus = document.getElementById('apiKeyStatus');
+  const authStatusBadge = document.getElementById('authStatusBadge');
 
-  // DOM Elements - Upload Stage
+  // DOM Elements - Subtoolbar
+  const langSelect = document.getElementById('langSelect');
+  const modePillsGroup = document.getElementById('modePillsGroup');
+  const toneSelect = document.getElementById('toneSelect');
+  const btnApplyAndDownload = document.getElementById('btnApplyAndDownload');
+
+  // DOM Elements - Left Pane
+  const leftInputState = document.getElementById('leftInputState');
+  const leftDocViewerState = document.getElementById('leftDocViewerState');
   const dropZone = document.getElementById('dropZone');
   const fileInput = document.getElementById('fileInput');
   const selectedFileInfo = document.getElementById('selectedFileInfo');
   const selectedFileName = document.getElementById('selectedFileName');
   const btnRemoveFile = document.getElementById('btnRemoveFile');
-  const toneSelect = document.getElementById('toneSelect');
-  const btnLoadSample = document.getElementById('btnLoadSample');
+  const rawTextInput = document.getElementById('rawTextInput');
+  const docViewer = document.getElementById('docViewer');
   const btnStartAnalysis = document.getElementById('btnStartAnalysis');
+  const btnStartText = document.getElementById('btnStartText');
+  const btnClearDoc = document.getElementById('btnClearDoc');
+  const wordCountLabel = document.getElementById('wordCountLabel');
+  const btnCopyContent = document.getElementById('btnCopyContent');
 
-  // DOM Elements - Review Stage
-  const btnBackToUpload = document.getElementById('btnBackToUpload');
-  const reviewDocName = document.getElementById('reviewDocName');
+  // DOM Elements - Right Pane
+  const rightEmptyState = document.getElementById('rightEmptyState');
+  const rightActiveState = document.getElementById('rightActiveState');
+  const autoAcceptBanner = document.getElementById('autoAcceptBanner');
+  const bannerAutoCount = document.getElementById('bannerAutoCount');
+  const bannerPendingText = document.getElementById('bannerPendingText');
+  const btnViewPendingOnly = document.getElementById('btnViewPendingOnly');
+  const btnCloseBanner = document.getElementById('btnCloseBanner');
   const filterChips = document.querySelectorAll('.chip');
   const countNeedsReview = document.getElementById('countNeedsReview');
   const countAutoAccepted = document.getElementById('countAutoAccepted');
   const countAll = document.getElementById('countAll');
   const countSpelling = document.getElementById('countSpelling');
   const countGrammar = document.getElementById('countGrammar');
+  const countSpacing = document.getElementById('countSpacing');
   const countClarity = document.getElementById('countClarity');
-  const autoAcceptBanner = document.getElementById('autoAcceptBanner');
-  const bannerAutoCount = document.getElementById('bannerAutoCount');
-  const bannerPendingText = document.getElementById('bannerPendingText');
-  const btnViewPendingOnly = document.getElementById('btnViewPendingOnly');
-  const btnAcceptAllRemaining = document.getElementById('btnAcceptAllRemaining');
-  const btnCloseBanner = document.getElementById('btnCloseBanner');
-  const btnAcceptAll = document.getElementById('btnAcceptAll');
-  const btnRejectAll = document.getElementById('btnRejectAll');
-  const docViewer = document.getElementById('docViewer');
   const suggestionsList = document.getElementById('suggestionsList');
-  const acceptedCountBadge = document.getElementById('acceptedCountBadge');
-  const rejectedCountBadge = document.getElementById('rejectedCountBadge');
-  const pendingCountBadge = document.getElementById('pendingCountBadge');
-  const progressSummary = document.getElementById('progressSummary');
-  const applyCountSummary = document.getElementById('applyCountSummary');
-  const progressBar = document.getElementById('progressBar');
-  const btnApplyAndDownload = document.getElementById('btnApplyAndDownload');
 
-  // DOM Elements - Stepper Navigation & In-Context Popover
+  // DOM Elements - Stepper & Bulk Decisions
   const btnPrevError = document.getElementById('btnPrevError');
   const btnNextError = document.getElementById('btnNextError');
   const errorCounterBadge = document.getElementById('errorCounterBadge');
+  const btnRejectAll = document.getElementById('btnRejectAll');
+  const btnAcceptAllRemaining = document.getElementById('btnAcceptAllRemaining');
+
+  // DOM Elements - In-Context Popover
   const inlinePopover = document.getElementById('inlinePopover');
   const popoverBadge = document.getElementById('popoverBadge');
   const popoverSeverity = document.getElementById('popoverSeverity');
@@ -94,10 +93,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const popoverBtnNext = document.getElementById('popoverBtnNext');
   const popoverBtnReject = document.getElementById('popoverBtnReject');
   const popoverBtnAccept = document.getElementById('popoverBtnAccept');
-  let currentActiveIssueId = null;
+
+  // DOM Elements - Modals & Login
+  const loginSection = document.getElementById('loginSection');
+  const loginForm = document.getElementById('loginForm');
+  const inputPasscode = document.getElementById('inputPasscode');
+  const btnTogglePasscodeVis = document.getElementById('btnTogglePasscodeVis');
+  const passcodeEyeIcon = document.getElementById('passcodeEyeIcon');
+  const btnUnlock = document.getElementById('btnUnlock');
+  const loginFeedback = document.getElementById('loginFeedback');
+  const settingsModal = document.getElementById('settingsModal');
+  const btnCloseModal = document.getElementById('btnCloseModal');
+  const inputApiKey = document.getElementById('inputApiKey');
+  const btnToggleKeyVis = document.getElementById('btnToggleKeyVis');
+  const btnTestKey = document.getElementById('btnTestKey');
+  const btnSaveKey = document.getElementById('btnSaveKey');
+  const keyTestResult = document.getElementById('keyTestResult');
+  const rulesModal = document.getElementById('rulesModal');
+  const btnCloseRulesModal = document.getElementById('btnCloseRulesModal');
+  const btnCloseRulesBtn = document.getElementById('btnCloseRulesBtn');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const loadingTitle = document.getElementById('loadingTitle');
+  const loadingMsg = document.getElementById('loadingMsg');
 
   // =========================================================================
-  // Authentication & Session Management
+  // Authentication & Passcode Gate
   // =========================================================================
 
   function getAuthToken() {
@@ -120,383 +140,537 @@ document.addEventListener('DOMContentLoaded', () => {
     const headers = { ...extraHeaders };
     const token = getAuthToken();
     if (token) {
+      headers['X-Team-Passcode'] = token;
       headers['Authorization'] = `Bearer ${token}`;
     }
     return headers;
   }
 
   async function authFetch(url, options = {}) {
-    const headers = getAuthHeaders(options.headers || {});
-    const resp = await fetch(url, { ...options, headers });
+    const opts = { ...options };
+    opts.headers = getAuthHeaders(opts.headers || {});
+    const resp = await fetch(url, opts);
     if (resp.status === 401) {
-      clearAuthToken();
-      showLoginView('Your session has expired or requires authentication. Please enter your team passcode.');
+      showLoginGate('Session expired or unauthorized. Please re-enter team passcode.');
       throw new Error('Authentication required');
     }
     return resp;
   }
 
-  function showLoginView(feedbackMsg = null) {
-    loginSection.classList.add('active');
-    uploadSection.classList.remove('active');
-    reviewSection.classList.remove('active');
-    authStatusBadge.classList.add('hidden');
-    btnLockSession.classList.add('hidden');
-    apiKeyStatus.classList.add('hidden');
-    btnSettings.classList.add('hidden');
-    
-    if (feedbackMsg) {
-      showLoginFeedback(feedbackMsg, false);
-    } else {
-      loginFeedback.classList.add('hidden');
+  function showLoginGate(feedbackMsg = '') {
+    if (loginSection) {
+      loginSection.classList.add('active');
     }
-    inputPasscode.value = '';
-    setTimeout(() => inputPasscode.focus(), 100);
+    if (feedbackMsg && loginFeedback) {
+      loginFeedback.textContent = feedbackMsg;
+      loginFeedback.className = 'login-feedback error';
+      loginFeedback.classList.remove('hidden');
+    }
+    if (authStatusBadge) authStatusBadge.classList.add('hidden');
+    if (btnLockSession) btnLockSession.classList.add('hidden');
+    if (inputPasscode) {
+      inputPasscode.value = '';
+      setTimeout(() => inputPasscode.focus(), 150);
+    }
   }
 
-  function showWorkspaceView() {
-    loginSection.classList.remove('active');
-    uploadSection.classList.add('active');
-    reviewSection.classList.remove('active');
-    authStatusBadge.classList.remove('hidden');
-    btnLockSession.classList.remove('hidden');
-    apiKeyStatus.classList.remove('hidden');
-    btnSettings.classList.remove('hidden');
-
-    // Load server configuration once authenticated
-    fetchConfig();
+  function unlockWorkspace() {
+    if (loginSection) {
+      loginSection.classList.remove('active');
+    }
+    if (authStatusBadge) authStatusBadge.classList.remove('hidden');
+    if (btnLockSession) btnLockSession.classList.remove('hidden');
+    if (loginFeedback) loginFeedback.classList.add('hidden');
   }
 
-  function showLoginFeedback(msg, isSuccess) {
-    loginFeedback.textContent = msg;
-    loginFeedback.className = `login-feedback ${isSuccess ? 'success' : 'error'}`;
-    loginFeedback.classList.remove('hidden');
-  }
-
-  // Passcode visibility toggle
-  btnTogglePasscodeVis.addEventListener('click', () => {
-    const isPassword = inputPasscode.type === 'password';
-    inputPasscode.type = isPassword ? 'text' : 'password';
-    passcodeEyeIcon.innerHTML = isPassword
-      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
-      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
-  });
-
-  // Login submission
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await handleLogin();
-  });
-
-  async function handleLogin() {
-    const passcode = inputPasscode.value.trim();
+  async function verifyPasscode(passcode) {
     if (!passcode) {
-      showLoginFeedback('Please enter the team passcode.', false);
-      inputPasscode.focus();
-      return;
+      showLoginError('Please enter a team passcode.');
+      return false;
     }
-
-    btnUnlock.disabled = true;
-    const origBtnHtml = btnUnlock.innerHTML;
-    btnUnlock.innerHTML = '<span>Verifying Passcode...</span>';
-
+    if (btnUnlock) {
+      btnUnlock.disabled = true;
+      btnUnlock.innerHTML = '<span>Verifying...</span>';
+    }
     try {
-      const resp = await fetch('/api/auth/login', {
+      const resp = await fetch('/api/verify-passcode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passcode })
+        body: JSON.stringify({ passcode: passcode.trim() })
       });
-
-      if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({ detail: 'Incorrect passcode' }));
-        showLoginFeedback(errorData.detail || 'Incorrect team passcode. Please try again.', false);
-        inputPasscode.select();
-        btnUnlock.disabled = false;
-        btnUnlock.innerHTML = origBtnHtml;
-        return;
-      }
-
       const data = await resp.json();
-      setAuthToken(data.token);
-      showLoginFeedback('Passcode verified! Unlocking workspace...', true);
-
-      setTimeout(() => {
-        btnUnlock.disabled = false;
-        btnUnlock.innerHTML = origBtnHtml;
-        showWorkspaceView();
-      }, 350);
-
+      if (resp.ok && data.success) {
+        setAuthToken(data.token || passcode.trim());
+        unlockWorkspace();
+        await checkServerApiKey();
+        return true;
+      } else {
+        showLoginError(data.detail || data.message || 'Incorrect passcode. Please check with your team lead.');
+        return false;
+      }
     } catch (err) {
-      showLoginFeedback('Network error verifying passcode. Please try again.', false);
-      btnUnlock.disabled = false;
-      btnUnlock.innerHTML = origBtnHtml;
+      showLoginError('Network connection error: ' + err.message);
+      return false;
+    } finally {
+      if (btnUnlock) {
+        btnUnlock.disabled = false;
+        btnUnlock.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+          </svg>
+          <span>Unlock Workspace</span>
+        `;
+      }
     }
   }
 
-  // Lock workspace / Logout button
-  btnLockSession.addEventListener('click', () => {
-    if (confirm('Lock the Stark Proofreader workspace? You will need to re-enter the team passcode.')) {
-      clearAuthToken();
-      showLoginView('Workspace locked. Enter passcode to return.');
+  function showLoginError(msg) {
+    if (loginFeedback) {
+      loginFeedback.textContent = msg;
+      loginFeedback.className = 'login-feedback error';
+      loginFeedback.classList.remove('hidden');
     }
-  });
+    if (inputPasscode) {
+      inputPasscode.focus();
+      inputPasscode.select();
+    }
+  }
 
-  // Check initial authentication status
-  checkAuthStatus();
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const code = inputPasscode.value;
+      await verifyPasscode(code);
+    });
+  }
 
-  async function checkAuthStatus() {
-    const token = getAuthToken();
-    if (!token) {
-      showLoginView();
+  if (btnTogglePasscodeVis) {
+    btnTogglePasscodeVis.addEventListener('click', () => {
+      const isPwd = inputPasscode.type === 'password';
+      inputPasscode.type = isPwd ? 'text' : 'password';
+      passcodeEyeIcon.innerHTML = isPwd
+        ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
+        : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+    });
+  }
+
+  if (btnLockSession) {
+    btnLockSession.addEventListener('click', () => {
+      if (confirm('Lock workspace session?')) {
+        clearAuthToken();
+        showLoginGate();
+      }
+    });
+  }
+
+  // Auto-verify stored passcode on page load
+  async function initAuth() {
+    const existingToken = getAuthToken();
+    if (!existingToken) {
+      showLoginGate();
       return;
     }
-
     try {
-      const resp = await fetch('/api/auth/status', {
-        headers: getAuthHeaders()
+      const resp = await fetch('/api/verify-passcode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode: existingToken })
       });
-      const data = await resp.json();
-      if (data.authenticated) {
-        showWorkspaceView();
+      if (resp.ok) {
+        unlockWorkspace();
+        await checkServerApiKey();
       } else {
         clearAuthToken();
-        showLoginView();
+        showLoginGate('Session expired. Please enter passcode.');
       }
-    } catch (err) {
-      // Offline fallback: show login
-      showLoginView();
+    } catch {
+      unlockWorkspace();
     }
   }
 
   // =========================================================================
-  // Settings & Configuration
+  // Theme Toggle (Light / Dark)
   // =========================================================================
 
-  // Load saved API key from localStorage
-  const savedKey = localStorage.getItem('docproofreader_api_key') || '';
-  if (savedKey) {
-    inputApiKey.value = savedKey;
+  const savedTheme = localStorage.getItem('stark_theme') || 'theme-light';
+  document.body.className = savedTheme;
+
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.body.classList.contains('theme-dark');
+      const nextTheme = isDark ? 'theme-light' : 'theme-dark';
+      document.body.className = nextTheme;
+      localStorage.setItem('stark_theme', nextTheme);
+    });
   }
 
-  async function fetchConfig() {
+  // Sidebar Collapse Toggle
+  if (btnToggleSidebar && appSidebar) {
+    btnToggleSidebar.addEventListener('click', () => {
+      appSidebar.classList.toggle('collapsed');
+      const isCol = appSidebar.classList.contains('collapsed');
+      localStorage.setItem('sidebar_collapsed', isCol ? '1' : '0');
+    });
+    if (localStorage.getItem('sidebar_collapsed') === '1') {
+      appSidebar.classList.add('collapsed');
+    }
+  }
+
+  // =========================================================================
+  // API Key & Model Configuration
+  // =========================================================================
+
+  function getClientApiKey() {
+    return localStorage.getItem('gemini_api_key') || '';
+  }
+  function setClientApiKey(key) {
+    if (key) localStorage.setItem('gemini_api_key', key);
+    else localStorage.removeItem('gemini_api_key');
+  }
+
+  async function checkServerApiKey() {
     try {
-      const resp = await authFetch('/api/config');
-      const data = await resp.json();
-      serverHasKey = data.has_server_key;
-      updateKeyBadge();
-    } catch (err) {
-      console.warn('Could not fetch server config:', err);
-      updateKeyBadge();
+      const resp = await authFetch('/api/key-status');
+      if (resp.ok) {
+        const data = await resp.json();
+        serverHasKey = data.server_has_key;
+        updateApiKeyUI();
+      }
+    } catch (e) {
+      updateApiKeyUI();
     }
   }
 
-  function getEffectiveKey() {
-    return localStorage.getItem('docproofreader_api_key') || '';
-  }
+  function updateApiKeyUI() {
+    const clientKey = getClientApiKey();
+    const isConfigured = serverHasKey || !!clientKey;
 
-  function updateKeyBadge() {
-    const userKey = getEffectiveKey();
-    if (serverHasKey) {
-      apiKeyStatus.className = 'status-badge status-ready';
-      apiKeyStatus.innerHTML = '<span class="status-dot"></span><span class="status-text">Server API Ready</span>';
-    } else if (userKey) {
-      apiKeyStatus.className = 'status-badge status-ready';
-      apiKeyStatus.innerHTML = '<span class="status-dot"></span><span class="status-text">User API Key Active</span>';
-    } else {
-      apiKeyStatus.className = 'status-badge status-warning';
-      apiKeyStatus.innerHTML = '<span class="status-dot"></span><span class="status-text">API Key Required</span>';
+    if (apiKeyStatus) {
+      if (isConfigured) {
+        apiKeyStatus.className = 'status-pill status-ready';
+        apiKeyStatus.querySelector('.status-text').textContent = 'Gemini Ready';
+      } else {
+        apiKeyStatus.className = 'status-pill status-missing';
+        apiKeyStatus.querySelector('.status-text').textContent = 'Need API Key';
+      }
+    }
+    if (sidebarApiKeyDot) {
+      sidebarApiKeyDot.className = isConfigured ? 'nav-status-dot dot-ready' : 'nav-status-dot dot-missing';
     }
   }
 
-  // Settings Modal Handlers
-  btnSettings.addEventListener('click', () => {
-    keyTestResult.classList.add('hidden');
-    settingsModal.classList.remove('hidden');
-  });
+  if (btnSettingsNav) {
+    btnSettingsNav.addEventListener('click', () => {
+      inputApiKey.value = getClientApiKey();
+      keyTestResult.classList.add('hidden');
+      settingsModal.classList.remove('hidden');
+    });
+  }
 
-  btnCloseModal.addEventListener('click', () => {
-    settingsModal.classList.add('hidden');
-  });
-
+  if (btnCloseModal) {
+    btnCloseModal.addEventListener('click', () => settingsModal.classList.add('hidden'));
+  }
   settingsModal.addEventListener('click', (e) => {
     if (e.target === settingsModal) settingsModal.classList.add('hidden');
   });
 
-  btnToggleKeyVis.addEventListener('click', () => {
-    inputApiKey.type = inputApiKey.type === 'password' ? 'text' : 'password';
-  });
-
-  btnTestKey.addEventListener('click', async () => {
-    const key = inputApiKey.value.trim();
-    if (!key) {
-      showKeyTestFeedback('Please enter an API key first.', false);
-      return;
-    }
-    btnTestKey.disabled = true;
-    btnTestKey.textContent = 'Testing...';
-    try {
-      const resp = await authFetch('/api/test-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ api_key: key })
-      });
-      const data = await resp.json();
-      if (data.valid) {
-        showKeyTestFeedback('Valid API Key! Successfully connected to Gemini High-Speed AI Engine.', true);
-      } else {
-        showKeyTestFeedback(`Key verification failed: ${data.error || 'Invalid key'}`, false);
-      }
-    } catch (err) {
-      showKeyTestFeedback(`Connection error: ${err.message}`, false);
-    } finally {
-      btnTestKey.disabled = false;
-      btnTestKey.textContent = 'Test Connection';
-    }
-  });
-
-  btnSaveKey.addEventListener('click', () => {
-    const key = inputApiKey.value.trim();
-    if (key) {
-      localStorage.setItem('docproofreader_api_key', key);
-    } else {
-      localStorage.removeItem('docproofreader_api_key');
-    }
-    updateKeyBadge();
-    settingsModal.classList.add('hidden');
-  });
-
-  function showKeyTestFeedback(message, isSuccess) {
-    keyTestResult.textContent = message;
-    keyTestResult.className = `key-test-feedback ${isSuccess ? 'success' : 'error'}`;
-    keyTestResult.classList.remove('hidden');
+  if (btnToggleKeyVis) {
+    btnToggleKeyVis.addEventListener('click', () => {
+      inputApiKey.type = inputApiKey.type === 'password' ? 'text' : 'password';
+    });
   }
 
-  // Theme toggle
-  themeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('theme-dark');
-    document.body.classList.toggle('theme-light');
+  if (btnTestKey) {
+    btnTestKey.addEventListener('click', async () => {
+      const keyToTest = inputApiKey.value.trim();
+      if (!keyToTest) {
+        keyTestResult.className = 'key-test-feedback error';
+        keyTestResult.textContent = 'Please enter an API key to test.';
+        keyTestResult.classList.remove('hidden');
+        return;
+      }
+      btnTestKey.disabled = true;
+      btnTestKey.textContent = 'Testing...';
+      try {
+        const resp = await authFetch('/api/test-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ api_key: keyToTest })
+        });
+        const data = await resp.json();
+        keyTestResult.classList.remove('hidden');
+        if (data.valid) {
+          keyTestResult.className = 'key-test-feedback success';
+          keyTestResult.textContent = '✓ ' + (data.message || 'Key is valid and active!');
+        } else {
+          keyTestResult.className = 'key-test-feedback error';
+          keyTestResult.textContent = '✗ ' + (data.error || 'Invalid API key.');
+        }
+      } catch (err) {
+        keyTestResult.className = 'key-test-feedback error';
+        keyTestResult.textContent = 'Network error testing key: ' + err.message;
+        keyTestResult.classList.remove('hidden');
+      } finally {
+        btnTestKey.disabled = false;
+        btnTestKey.textContent = 'Test Connection';
+      }
+    });
+  }
+
+  if (btnSaveKey) {
+    btnSaveKey.addEventListener('click', () => {
+      const key = inputApiKey.value.trim();
+      setClientApiKey(key);
+      updateApiKeyUI();
+      settingsModal.classList.add('hidden');
+    });
+  }
+
+  // Rules Modal
+  if (btnRulesNav) {
+    btnRulesNav.addEventListener('click', () => rulesModal.classList.remove('hidden'));
+  }
+  if (btnCloseRulesModal) {
+    btnCloseRulesModal.addEventListener('click', () => rulesModal.classList.add('hidden'));
+  }
+  if (btnCloseRulesBtn) {
+    btnCloseRulesBtn.addEventListener('click', () => rulesModal.classList.add('hidden'));
+  }
+  rulesModal.addEventListener('click', (e) => {
+    if (e.target === rulesModal) rulesModal.classList.add('hidden');
   });
 
   // =========================================================================
-  // Upload Stage: Drag & Drop and File Selection
-  dropZone.addEventListener('click', (e) => {
-    if (e.target !== fileInput && !e.target.closest('#btnRemoveFile')) {
-      fileInput.click();
+  // Sub-Toolbar Mode Pills (Light, Standard, Intensive, Concise)
+  // =========================================================================
+
+  if (modePillsGroup) {
+    const pills = modePillsGroup.querySelectorAll('.mode-pill');
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        pills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const mode = pill.getAttribute('data-mode');
+        // Map mode to tone
+        if (mode === 'light') toneSelect.value = 'strict';
+        else if (mode === 'intensive') toneSelect.value = 'formal';
+        else if (mode === 'concise') toneSelect.value = 'concise';
+        else toneSelect.value = 'business';
+      });
+    });
+  }
+
+  // =========================================================================
+  // Dropzone & File Handling / Direct Textarea
+  // =========================================================================
+
+  function countWords(str) {
+    if (!str) return 0;
+    return str.trim().split(/\s+/).filter(Boolean).length;
+  }
+
+  function updateWordCountUI() {
+    if (leftDocViewerState && !leftDocViewerState.classList.contains('hidden')) {
+      let totalWords = 0;
+      docBlocks.forEach(b => { totalWords += countWords(b.text); });
+      wordCountLabel.textContent = `${totalWords.toLocaleString()} words • ${docBlocks.length} blocks`;
+    } else if (rawTextInput && rawTextInput.value.trim()) {
+      const words = countWords(rawTextInput.value);
+      wordCountLabel.textContent = `${words} / 500 words`;
+    } else if (currentFile) {
+      const sizeKb = Math.round(currentFile.size / 1024);
+      wordCountLabel.textContent = `${sizeKb} KB • .docx`;
+    } else {
+      wordCountLabel.textContent = '0 words';
     }
-  });
+  }
 
-  dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.classList.add('dragover');
-  });
+  if (rawTextInput) {
+    rawTextInput.addEventListener('input', () => {
+      updateWordCountUI();
+      if (rawTextInput.value.trim()) {
+        btnStartText.textContent = 'Proofread Text';
+      } else if (currentFile) {
+        btnStartText.textContent = 'Proofread Document';
+      } else {
+        btnStartText.textContent = 'Proofread';
+      }
+    });
+  }
 
-  dropZone.addEventListener('dragleave', () => {
-    dropZone.classList.remove('dragover');
-  });
+  // Setup Drag & Drop
+  if (dropZone) {
+    dropZone.addEventListener('click', (e) => {
+      if (e.target !== btnRemoveFile) fileInput.click();
+    });
 
-  dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFileSelected(e.dataTransfer.files[0]);
-    }
-  });
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+    });
 
-  fileInput.addEventListener('change', (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFileSelected(e.target.files[0]);
-    }
-  });
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      });
+    });
 
-  btnRemoveFile.addEventListener('click', (e) => {
-    e.stopPropagation();
-    currentFile = null;
-    fileInput.value = '';
-    selectedFileInfo.classList.add('hidden');
-    btnStartAnalysis.disabled = true;
-  });
+    dropZone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files.length > 0) handleFileSelect(files[0]);
+    });
+  }
 
-  function handleFileSelected(file) {
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) handleFileSelect(fileInput.files[0]);
+    });
+  }
+
+  function handleFileSelect(file) {
     if (!file.name.toLowerCase().endsWith('.docx')) {
-      alert('Please upload a Microsoft Word document with a .docx extension.');
+      alert('Please upload a Microsoft Word (.docx) document.');
       return;
     }
     currentFile = file;
     selectedFileName.textContent = file.name;
     selectedFileInfo.classList.remove('hidden');
-    btnStartAnalysis.disabled = false;
+    btnStartText.textContent = 'Proofread Document';
+    updateWordCountUI();
   }
 
-  // Load Sample Document
-  btnLoadSample.addEventListener('click', async () => {
-    showLoading('Loading Sample Document...', 'Fetching pre-configured business report sample...');
-    try {
-      const resp = await authFetch('/api/sample-doc');
-      if (!resp.ok) throw new Error('Could not load sample document');
-      const blob = await resp.blob();
-      const sampleFile = new File([blob], 'Sample_Business_Report.docx', {
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  if (btnRemoveFile) {
+    btnRemoveFile.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentFile = null;
+      fileInput.value = '';
+      selectedFileInfo.classList.add('hidden');
+      updateWordCountUI();
+    });
+  }
+
+  // Clear / New Document Button
+  if (btnClearDoc) {
+    btnClearDoc.addEventListener('click', () => {
+      if (docBlocks.length > 0 || currentFile || (rawTextInput && rawTextInput.value.trim())) {
+        if (!confirm('Clear current document and start over?')) return;
+      }
+      resetToInputState();
+    });
+  }
+
+  function resetToInputState() {
+    currentFile = null;
+    sessionId = null;
+    docBlocks = [];
+    docIssues = [];
+    decisions = {};
+    if (fileInput) fileInput.value = '';
+    if (rawTextInput) rawTextInput.value = '';
+    if (selectedFileInfo) selectedFileInfo.classList.add('hidden');
+    if (leftDocViewerState) leftDocViewerState.classList.add('hidden');
+    if (leftInputState) leftInputState.classList.remove('hidden');
+    if (rightActiveState) rightActiveState.classList.add('hidden');
+    if (rightEmptyState) rightEmptyState.classList.remove('hidden');
+    if (activeDocTag) activeDocTag.classList.add('hidden');
+    if (btnApplyAndDownload) btnApplyAndDownload.classList.add('hidden');
+    if (inlinePopover) inlinePopover.classList.add('hidden');
+    btnStartText.textContent = 'Proofread';
+    updateWordCountUI();
+  }
+
+  // Copy Content Button
+  if (btnCopyContent) {
+    btnCopyContent.addEventListener('click', () => {
+      let textToCopy = '';
+      if (docBlocks.length > 0) {
+        textToCopy = docBlocks.map(b => b.text).join('\n\n');
+      } else if (rawTextInput) {
+        textToCopy = rawTextInput.value;
+      }
+      if (!textToCopy) {
+        alert('No content to copy.');
+        return;
+      }
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const origTitle = btnCopyContent.title;
+        btnCopyContent.title = 'Copied!';
+        btnCopyContent.style.color = 'var(--brand-primary)';
+        setTimeout(() => {
+          btnCopyContent.title = origTitle;
+          btnCopyContent.style.color = '';
+        }, 1500);
       });
-      handleFileSelected(sampleFile);
-      hideLoading();
-      // Automatically trigger analysis
-      btnStartAnalysis.click();
-    } catch (err) {
-      hideLoading();
-      alert('Error fetching sample: ' + err.message);
-    }
-  });
+    });
+  }
 
-  // Start Document Analysis
+  // Try Sample Report Button
+  if (btnLoadSample) {
+    btnLoadSample.addEventListener('click', async () => {
+      showLoading('Loading Sample Report...', 'Fetching pre-configured Stark quarterly report with realistic grammar, spelling, and spacing errors...');
+      try {
+        const resp = await authFetch('/api/sample-doc');
+        if (!resp.ok) throw new Error('Could not load sample document');
+        const blob = await resp.blob();
+        currentFile = new File([blob], 'Stark_Quarterly_Report_Sample.docx', {
+          type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        });
+        selectedFileName.textContent = currentFile.name;
+        selectedFileInfo.classList.remove('hidden');
+        hideLoading();
+        // Immediately start analysis for seamless testing!
+        btnStartAnalysis.click();
+      } catch (err) {
+        hideLoading();
+        alert('Failed to load sample: ' + err.message);
+      }
+    });
+  }
+
+  // =========================================================================
+  // Start Proofreading Analysis
+  // =========================================================================
+
   btnStartAnalysis.addEventListener('click', async () => {
-    if (!currentFile) return;
+    const rawText = rawTextInput ? rawTextInput.value.trim() : '';
 
-    const userKey = getEffectiveKey();
-    if (!serverHasKey && !userKey) {
-      settingsModal.classList.remove('hidden');
-      showKeyTestFeedback('Please enter your Gemini API key to start proofreading.', false);
+    if (!currentFile && !rawText) {
+      alert('Please choose a Word (.docx) document or enter text in the editor.');
       return;
     }
 
-    let elapsed = 0;
-    const loadingTimer = setInterval(() => {
-      elapsed++;
-      if (elapsed === 2) {
-        loadingMsg.textContent = 'Scanning grammar, spelling & clarity with Gemini AI... (' + elapsed + 's)';
-      } else if (elapsed === 4) {
-        loadingMsg.textContent = 'Formatting suggestions and building review workspace... (' + elapsed + 's)';
-      } else {
-        loadingTitle.textContent = 'Fast AI Proofreading (' + elapsed + 's)';
-      }
-    }, 1000);
-
-    showLoading('Fast AI Proofreading...', 'Extracting paragraphs & checking with Gemini AI...');
-
-    const formData = new FormData();
-    formData.append('file', currentFile);
-    if (userKey) {
-      formData.append('api_key', userKey);
+    const effectiveKey = getClientApiKey();
+    if (!serverHasKey && !effectiveKey) {
+      settingsModal.classList.remove('hidden');
+      alert('Please provide a Google Gemini API Key first.');
+      return;
     }
-    formData.append('tone', toneSelect.value);
+
+    showLoading('Fast AI Proofreading...', 'Checking grammar, spelling, double spaces, and phrasing with Gemini High-Speed AI...');
 
     try {
-      const resp = await authFetch('/api/analyze', {
-        method: 'POST',
-        body: formData
-      });
-
-      clearInterval(loadingTimer);
+      let resp;
+      if (currentFile) {
+        const formData = new FormData();
+        formData.append('file', currentFile);
+        if (effectiveKey) formData.append('api_key', effectiveKey);
+        formData.append('tone', toneSelect ? toneSelect.value : 'business');
+        resp = await authFetch('/api/analyze', { method: 'POST', body: formData });
+      } else {
+        const formData = new FormData();
+        formData.append('text', rawText);
+        if (effectiveKey) formData.append('api_key', effectiveKey);
+        formData.append('tone', toneSelect ? toneSelect.value : 'business');
+        resp = await authFetch('/api/analyze-text', { method: 'POST', body: formData });
+      }
 
       if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({ detail: resp.statusText }));
-        const msg = errorData.detail || 'Analysis request failed';
-        if (msg.includes('API key') || msg.includes('API_KEY_INVALID') || msg.includes('INVALID_ARGUMENT')) {
-          hideLoading();
-          settingsModal.classList.remove('hidden');
-          showKeyTestFeedback('Your Gemini API Key is missing or invalid. Please paste your valid key below and click "Save Key".', false);
-          return;
-        }
-        throw new Error(msg);
+        const errData = await resp.json().catch(() => ({ detail: resp.statusText }));
+        throw new Error(errData.detail || 'Analysis failed');
       }
 
       const result = await resp.json();
@@ -504,7 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
       docBlocks = result.blocks || [];
       docIssues = result.issues || [];
 
-      // Initialize decisions: Auto-accept all spelling and evident grammar errors!
+      // Initialize decisions: auto-accept typos & evident grammar
       decisions = {};
       let autoCount = 0;
       let reviewCount = 0;
@@ -534,23 +708,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Default active filter: focus on items needing confirmation if any, else all
       currentFilter = reviewCount > 0 ? 'needs_review' : 'all';
       filterChips.forEach(c => {
         c.classList.toggle('active', c.getAttribute('data-filter') === currentFilter);
       });
 
-      // Switch to Review Workspace
+      // Switch to Review State
       renderReviewWorkspace(result.filename);
       hideLoading();
     } catch (err) {
-      clearInterval(loadingTimer);
       hideLoading();
       alert('Error analyzing document: ' + err.message);
     }
   });
-
-  let activeLoadingInterval = null;
 
   function showLoading(title, message) {
     loadingTitle.textContent = title;
@@ -559,16 +729,46 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function hideLoading() {
-    if (activeLoadingInterval) {
-      clearInterval(activeLoadingInterval);
-      activeLoadingInterval = null;
-    }
     loadingOverlay.classList.add('hidden');
   }
 
   // =========================================================================
-  // Review Workspace: Split View Rendering & Interactions
+  // Review Workspace Rendering
   // =========================================================================
+
+  function renderReviewWorkspace(filename) {
+    // Show active states
+    if (leftInputState) leftInputState.classList.add('hidden');
+    if (leftDocViewerState) leftDocViewerState.classList.remove('hidden');
+    if (rightEmptyState) rightEmptyState.classList.add('hidden');
+    if (rightActiveState) rightActiveState.classList.remove('hidden');
+
+    if (activeDocTag) {
+      activeDocTag.classList.remove('hidden');
+      activeDocTitle.textContent = filename || 'Document.docx';
+    }
+    if (btnApplyAndDownload) {
+      btnApplyAndDownload.classList.remove('hidden');
+    }
+
+    updateFilterCounts();
+    renderDocumentView();
+    renderSuggestionsList();
+    updateWordCountUI();
+
+    // Focus first actionable issue
+    currentActiveIssueId = null;
+    const visible = getVisibleIssues();
+    if (visible.length > 0) {
+      const first = visible.find(i => {
+        const d = decisions[i.id] || {};
+        return !d.accepted && !d.rejected;
+      }) || visible[0];
+      setTimeout(() => activateIssue(first.id, first.block_id, true), 120);
+    } else {
+      updateStepperCounter();
+    }
+  }
 
   function getVisibleIssues() {
     return docIssues.filter(issue => {
@@ -580,77 +780,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentFilter === 'clarity') return t === 'clarity' || t === 'style';
       if (currentFilter === 'spacing') return t === 'spacing' || t === 'punctuation';
       return t === currentFilter;
-    });
-  }
-
-  function renderReviewWorkspace(filename) {
-    reviewDocName.textContent = filename || 'Document.docx';
-    uploadSection.classList.remove('active');
-    reviewSection.classList.add('active');
-
-    // Update issue counts & banner
-    updateFilterCounts();
-
-    // Render left panel (Document View)
-    renderDocumentView();
-
-    // Render right panel (Suggestions List)
-    renderSuggestionsList();
-
-    // Update footer progress
-    updateReviewProgress();
-
-    // Reset active issue & initialize stepper / focus
-    currentActiveIssueId = null;
-    const visible = getVisibleIssues();
-    if (visible.length > 0) {
-      const first = visible.find(i => {
-        const d = decisions[i.id] || {};
-        return !d.accepted && !d.rejected;
-      }) || visible[0];
-      setTimeout(() => {
-        activateIssue(first.id, first.block_id, true);
-      }, 150);
-    } else {
-      updateStepperCounter();
-    }
-  }
-
-  btnBackToUpload.addEventListener('click', () => {
-    if (confirm('Go back to upload? Any unapplied review decisions will be discarded.')) {
-      reviewSection.classList.remove('active');
-      uploadSection.classList.add('active');
-    }
-  });
-
-  // Wire up Smart Banner quick action buttons
-  if (btnViewPendingOnly) {
-    btnViewPendingOnly.addEventListener('click', () => {
-      filterChips.forEach(c => c.classList.remove('active'));
-      const chip = document.querySelector('.chip[data-filter="needs_review"]');
-      if (chip) chip.classList.add('active');
-      currentFilter = 'needs_review';
-      renderSuggestionsList();
-    });
-  }
-
-  if (btnAcceptAllRemaining) {
-    btnAcceptAllRemaining.addEventListener('click', () => {
-      docIssues.forEach(issue => {
-        const d = decisions[issue.id];
-        if (!d.accepted && !d.rejected) {
-          setDecision(issue.id, true, false);
-        }
-      });
-      btnApplyAndDownload.click();
-    });
-  }
-
-  if (btnCloseBanner) {
-    btnCloseBanner.addEventListener('click', () => {
-      if (autoAcceptBanner) {
-        autoAcceptBanner.style.display = 'none';
-      }
     });
   }
 
@@ -669,28 +798,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (countAll) countAll.textContent = docIssues.length;
     if (countSpelling) countSpelling.textContent = docIssues.filter(i => (i.error_type || '').toLowerCase() === 'spelling').length;
     if (countGrammar) countGrammar.textContent = docIssues.filter(i => (i.error_type || '').toLowerCase() === 'grammar').length;
-    const countSpacing = document.getElementById('countSpacing');
     if (countSpacing) countSpacing.textContent = docIssues.filter(i => ['spacing', 'punctuation'].includes((i.error_type || '').toLowerCase())).length;
     if (countClarity) countClarity.textContent = docIssues.filter(i => ['clarity', 'style'].includes((i.error_type || '').toLowerCase())).length;
 
-    // Update Smart Banner
+    // Smart Banner
     if (bannerAutoCount) {
-      bannerAutoCount.textContent = `${autoAcceptedCount} spelling, grammar & spacing errors`;
+      bannerAutoCount.textContent = `${autoAcceptedCount} typos & errors`;
     }
     if (bannerPendingText) {
       if (pendingCount > 0) {
-        bannerPendingText.textContent = `${pendingCount} suggestion${pendingCount === 1 ? '' : 's'} need your confirmation.`;
+        bannerPendingText.textContent = `${pendingCount} suggestion${pendingCount === 1 ? '' : 's'} need your review.`;
         if (btnViewPendingOnly) btnViewPendingOnly.style.display = 'inline-flex';
         if (btnAcceptAllRemaining) btnAcceptAllRemaining.style.display = 'inline-flex';
       } else {
-        bannerPendingText.textContent = `All suggestions confirmed! Ready to download your clean file.`;
+        bannerPendingText.textContent = `All suggestions confirmed! Ready to download.`;
         if (btnViewPendingOnly) btnViewPendingOnly.style.display = 'none';
         if (btnAcceptAllRemaining) btnAcceptAllRemaining.style.display = 'none';
       }
     }
   }
 
-  // Filter chips handler
+  // Filter Chips Click
   filterChips.forEach(chip => {
     chip.addEventListener('click', () => {
       filterChips.forEach(c => c.classList.remove('active'));
@@ -711,11 +839,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Render Document View (Left Panel)
+  // Banner Actions
+  if (btnViewPendingOnly) {
+    btnViewPendingOnly.addEventListener('click', () => {
+      filterChips.forEach(c => c.classList.remove('active'));
+      const chip = document.querySelector('.chip[data-filter="needs_review"]');
+      if (chip) chip.classList.add('active');
+      currentFilter = 'needs_review';
+      renderSuggestionsList();
+    });
+  }
+
+  if (btnCloseBanner) {
+    btnCloseBanner.addEventListener('click', () => {
+      if (autoAcceptBanner) autoAcceptBanner.style.display = 'none';
+    });
+  }
+
+  if (btnAcceptAllRemaining) {
+    btnAcceptAllRemaining.addEventListener('click', () => {
+      docIssues.forEach(issue => {
+        const d = decisions[issue.id];
+        if (!d.accepted && !d.rejected) {
+          setDecision(issue.id, true, false);
+        }
+      });
+      btnApplyAndDownload.click();
+    });
+  }
+
+  // =========================================================================
+  // Document View Rendering (Left Pane)
+  // =========================================================================
+
   function renderDocumentView() {
     docViewer.innerHTML = '';
 
-    // Group issues by block_id
     const issuesByBlock = {};
     docIssues.forEach(issue => {
       issuesByBlock[issue.block_id] = issuesByBlock[issue.block_id] || [];
@@ -734,8 +893,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const blockIssues = issuesByBlock[block.id] || [];
       if (blockIssues.length > 0) {
-        pElem.classList.add('has-errors');
-        // Render text with highlight spans
         pElem.innerHTML = buildHighlightedHtml(block.text, blockIssues);
       } else {
         pElem.textContent = block.text;
@@ -744,7 +901,7 @@ document.addEventListener('DOMContentLoaded', () => {
       docViewer.appendChild(pElem);
     });
 
-    // Attach click listeners to highlighted spans
+    // Attach click listeners to highlight spans
     docViewer.querySelectorAll('.inline-error-highlight').forEach(span => {
       span.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -756,46 +913,29 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function buildHighlightedHtml(text, issues) {
-    // Sort issues by char_start ascending
     const sorted = [...issues].sort((a, b) => (a.char_start || 0) - (b.char_start || 0));
-
     let html = '';
     let lastIdx = 0;
 
-    for (const issue of sorted) {
-      let start = issue.char_start;
-      let end = issue.char_end;
+    sorted.forEach(issue => {
+      const start = issue.char_start || 0;
+      const end = issue.char_end || start + (issue.original_text || '').length;
 
-      if (start === undefined || end === undefined || start < lastIdx || end > text.length) {
-        // Robust fallback: search for original_text starting from lastIdx
-        const orig = issue.original_text || '';
-        if (!orig) continue;
-        let found = text.indexOf(orig, lastIdx);
-        if (found === -1) {
-          // Case-insensitive search
-          found = text.toLowerCase().indexOf(orig.toLowerCase(), lastIdx);
-        }
-        if (found !== -1) {
-          start = found;
-          end = found + orig.length;
-        } else {
-          continue;
-        }
+      if (start > lastIdx) {
+        html += escapeHtml(text.slice(lastIdx, start));
       }
 
-      // Plain text before issue
-      html += escapeHtml(text.substring(lastIdx, start));
-
-      // Highlight span
-      const typeClass = `type-${(issue.error_type || 'grammar').toLowerCase()}`;
-      const origText = escapeHtml(text.substring(start, end));
-      html += `<span class="inline-error-highlight ${typeClass}" data-issue-id="${issue.id}" title="${escapeHtml(issue.explanation)}">${origText}</span>`;
+      const originalPart = text.slice(start, end) || issue.original_text;
+      const errType = (issue.error_type || 'grammar').toLowerCase();
+      html += `<span class="inline-error-highlight type-${errType}" data-issue-id="${issue.id}">${escapeHtml(originalPart)}</span>`;
 
       lastIdx = end;
+    });
+
+    if (lastIdx < text.length) {
+      html += escapeHtml(text.slice(lastIdx));
     }
 
-    // Remaining text
-    html += escapeHtml(text.substring(lastIdx));
     return html;
   }
 
@@ -809,38 +949,25 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/'/g, '&#039;');
   }
 
-  function formatDiffContent(text, isSpacing = false) {
+  function formatDiffContent(text) {
     if (!text) return '';
-    const escaped = escapeHtml(text);
-    if (isSpacing && text.includes('  ')) {
-      return escaped.replace(/  +/g, match => `<span class="diff-space-pill" title="${match.length} consecutive spaces">${'·'.repeat(match.length)}</span>`);
-    }
-    return escaped;
+    return escapeHtml(text);
   }
 
-  // Render Suggestions List (Right Panel)
+  // =========================================================================
+  // Suggestions List Rendering (Right Pane)
+  // =========================================================================
+
   function renderSuggestionsList() {
     suggestionsList.innerHTML = '';
-
-    const filteredIssues = docIssues.filter(issue => {
-      const d = decisions[issue.id] || {};
-      if (currentFilter === 'all') return true;
-      if (currentFilter === 'needs_review') return !d.accepted && !d.rejected;
-      if (currentFilter === 'auto_accepted') return d.autoAccepted && d.accepted;
-      const t = (issue.error_type || '').toLowerCase();
-      if (currentFilter === 'clarity') return t === 'clarity' || t === 'style';
-      if (currentFilter === 'spacing') return t === 'spacing' || t === 'punctuation';
-      return t === currentFilter;
-    });
+    const filteredIssues = getVisibleIssues();
 
     if (filteredIssues.length === 0) {
-      let emptyMsg = 'Everything in this category is clean!';
-      if (currentFilter === 'needs_review') emptyMsg = 'All suggestions have been confirmed! Click below to download.';
       suggestionsList.innerHTML = `
-        <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
-          <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🎉</div>
-          <h4 style="color: var(--text-main); margin-bottom: 0.35rem;">No items to display</h4>
-          <p style="font-size: 0.88rem;">${emptyMsg}</p>
+        <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-dim);">
+          <div style="font-size: 1.8rem; margin-bottom: 0.35rem;">✨</div>
+          <h4 style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 0.2rem;">All clear in this category!</h4>
+          <p style="font-size: 0.8rem;">Click 'Download Clean Document' to export your final file.</p>
         </div>
       `;
       return;
@@ -867,7 +994,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const typeLabel = errType.charAt(0).toUpperCase() + errType.slice(1);
     const isAuto = decision.autoAccepted && decision.accepted;
 
-    // Check if this error/word appears multiple times in the document
     const targetKey = (issue.original_text || '').trim().toLowerCase();
     let repeatCount = 0;
     if (targetKey) {
@@ -876,21 +1002,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let statusBadgeHtml = '';
     if (isAuto) {
-      statusBadgeHtml = `<span class="badge-auto-accepted" title="Corrected automatically without asking">✓ Auto-Corrected</span>`;
+      statusBadgeHtml = `<span class="badge-auto-accepted" title="Auto-corrected">✓ Auto</span>`;
     } else if (decision.accepted) {
-      statusBadgeHtml = `<span class="card-status-badge status-accepted">✓ Accepted</span>`;
+      statusBadgeHtml = `<span class="card-status-badge status-accepted">✓ Confirmed</span>`;
     } else if (decision.rejected) {
       statusBadgeHtml = `<span class="card-status-badge status-rejected">✗ Dismissed</span>`;
     } else {
-      statusBadgeHtml = `<span class="badge-needs-review">⏳ Needs Review</span>`;
+      statusBadgeHtml = `<span class="badge-needs-review">Review</span>`;
     }
 
     card.innerHTML = `
       <div class="card-header-row">
         <div class="card-badges">
           <span class="type-badge badge-${errType}">${typeLabel}</span>
-          ${issue.severity && issue.severity !== 'suggestion' ? `<span class="card-severity badge-severity-${issue.severity.toLowerCase()}">${issue.severity}</span>` : ''}
-          ${repeatCount > 1 ? `<span class="badge-repeated" title="Occurs ${repeatCount} times in document (auto-synced)">🔁 ${repeatCount}x</span>` : ''}
+          ${repeatCount > 1 ? `<span class="badge-repeated" title="Occurs ${repeatCount} times in document (synced)">🔁 ${repeatCount}x</span>` : ''}
         </div>
         <div class="card-status-container" id="statusContainer_${issue.id}">
           ${statusBadgeHtml}
@@ -898,50 +1023,30 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <div class="card-diff-box">
-        <del class="diff-del">${formatDiffContent(issue.original_text, errType === 'spacing')}</del>
+        <del class="diff-del">${formatDiffContent(issue.original_text)}</del>
         <span class="diff-arrow">→</span>
-        <ins class="diff-ins" id="targetText_${issue.id}">${formatDiffContent(decision.editedText, errType === 'spacing')}</ins>
+        <ins class="diff-ins" id="targetText_${issue.id}">${formatDiffContent(decision.editedText)}</ins>
       </div>
 
       <p class="card-explanation">${escapeHtml(issue.explanation)}</p>
 
-      <div class="card-edit-wrap hidden" id="editWrap_${issue.id}">
-        <input type="text" class="edit-input" id="editInput_${issue.id}" value="${escapeHtml(decision.editedText)}">
-        <button class="btn btn-secondary btn-sm" id="btnSaveEdit_${issue.id}">Save</button>
-      </div>
-
       <div class="card-actions-row">
-        <button class="btn btn-secondary btn-sm" id="btnToggleEdit_${issue.id}">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 20h9"></path>
-            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-          </svg>
-          <span>Edit</span>
-        </button>
-
-        <div style="display: flex; gap: 0.5rem;" id="actionButtons_${issue.id}">
+        <button class="btn btn-secondary btn-xs" id="btnToggleEdit_${issue.id}">Edit</button>
+        <div style="display: flex; gap: 0.35rem;" id="actionButtons_${issue.id}">
           ${isAuto ? `
-            <button class="btn btn-secondary btn-sm" id="btnReject_${issue.id}" title="Revert this automatic fix">Revert</button>
+            <button class="btn btn-secondary btn-xs" id="btnReject_${issue.id}" title="Revert auto-correction">Revert</button>
           ` : `
-            <button class="btn ${decision.rejected ? 'btn-danger' : 'btn-outline-danger'} btn-sm" id="btnReject_${issue.id}">
-              ✗ Reject
-            </button>
-            <button class="btn ${decision.accepted ? 'btn-success' : 'btn-outline-success'} btn-sm" id="btnAccept_${issue.id}">
-              ✓ Accept
-            </button>
+            <button class="btn-card-reject" id="btnReject_${issue.id}">✗ Reject</button>
+            <button class="btn-card-accept" id="btnAccept_${issue.id}">✓ Accept</button>
           `}
         </div>
       </div>
     `;
 
-    // Event Listeners for Card
+    // Listeners for Card
     const btnAccept = card.querySelector(`#btnAccept_${issue.id}`);
     const btnReject = card.querySelector(`#btnReject_${issue.id}`);
     const btnToggleEdit = card.querySelector(`#btnToggleEdit_${issue.id}`);
-    const editWrap = card.querySelector(`#editWrap_${issue.id}`);
-    const editInput = card.querySelector(`#editInput_${issue.id}`);
-    const btnSaveEdit = card.querySelector(`#btnSaveEdit_${issue.id}`);
-    const targetText = card.querySelector(`#targetText_${issue.id}`);
 
     if (btnAccept) {
       btnAccept.addEventListener('click', (e) => {
@@ -957,109 +1062,27 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    btnToggleEdit.addEventListener('click', (e) => {
-      e.stopPropagation();
-      editWrap.classList.toggle('hidden');
-      if (!editWrap.classList.contains('hidden')) {
-        editInput.focus();
-      }
-    });
+    if (btnToggleEdit) {
+      btnToggleEdit.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const customText = prompt('Enter your replacement text:', decision.editedText || issue.suggested_text);
+        if (customText !== null) {
+          decision.editedText = customText;
+          setDecision(issue.id, true, false, false);
+          renderSuggestionsList();
+        }
+      });
+    }
 
-    btnSaveEdit.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const val = editInput.value.trim();
-      if (val) {
-        decisions[issue.id].editedText = val;
-        targetText.innerHTML = formatDiffContent(val, errType === 'spacing');
-        editWrap.classList.add('hidden');
-        setDecision(issue.id, true, false, true);
-      }
-    });
-
-    // Clicking anywhere on the suggestion card navigates directly to that part of the document!
-    card.addEventListener('click', (e) => {
-      if (e.target.closest('button') || e.target.closest('input')) return;
+    card.addEventListener('click', () => {
       activateIssue(issue.id, issue.block_id, true, 'card');
-    });
-
-    // Hover on card focuses corresponding paragraph highlight
-    card.addEventListener('mouseenter', () => {
-      highlightDocumentSpan(issue.id, true);
-    });
-    card.addEventListener('mouseleave', () => {
-      highlightDocumentSpan(issue.id, false);
     });
 
     return card;
   }
 
-  function setDecision(issueId, accepted, rejected, syncSameText = true) {
-    const targetIssue = docIssues.find(i => i.id === issueId);
-    if (!targetIssue) return;
-
-    const targetKey = (targetIssue.original_text || '').trim().toLowerCase();
-    const editedVal = decisions[issueId]?.editedText || targetIssue.suggested_text;
-
-    // If word/sentence is repeated in the document, sync across all occurrences
-    const issuesToSync = (syncSameText && targetKey) ?
-      docIssues.filter(i => (i.original_text || '').trim().toLowerCase() === targetKey) :
-      [targetIssue];
-
-    issuesToSync.forEach(item => {
-      if (!decisions[item.id]) return;
-      decisions[item.id].accepted = accepted;
-      decisions[item.id].rejected = rejected;
-      if (editedVal) decisions[item.id].editedText = editedVal;
-
-      const card = document.getElementById(`card_${item.id}`);
-      if (card) {
-        card.classList.remove('card-accepted', 'card-rejected');
-        if (accepted) card.classList.add('card-accepted');
-        if (rejected) card.classList.add('card-rejected');
-
-        const targetText = card.querySelector(`#targetText_${item.id}`);
-        if (targetText && editedVal) targetText.textContent = editedVal;
-
-        const statusContainer = card.querySelector(`#statusContainer_${item.id}`);
-        if (statusContainer) {
-          if (accepted) {
-            statusContainer.innerHTML = `<span class="card-status-badge status-accepted">✓ Accepted</span>`;
-          } else if (rejected) {
-            statusContainer.innerHTML = `<span class="card-status-badge status-rejected">✗ Dismissed</span>`;
-          } else {
-            statusContainer.innerHTML = `<span class="badge-needs-review">⏳ Needs Review</span>`;
-          }
-        }
-
-        const actionsDiv = card.querySelector(`#actionButtons_${item.id}`);
-        if (actionsDiv) {
-          if (accepted) {
-            actionsDiv.innerHTML = `<button class="btn btn-secondary btn-sm" id="btnReject_${item.id}">Revert</button>`;
-            card.querySelector(`#btnReject_${item.id}`).addEventListener('click', (e) => {
-              e.stopPropagation();
-              setDecision(item.id, false, true, true);
-            });
-          } else if (rejected) {
-            actionsDiv.innerHTML = `<button class="btn btn-outline-success btn-sm" id="btnAccept_${item.id}">✓ Accept</button>`;
-            card.querySelector(`#btnAccept_${item.id}`).addEventListener('click', (e) => {
-              e.stopPropagation();
-              setDecision(item.id, true, false, true);
-            });
-          }
-        }
-      }
-    });
-
-    updateFilterCounts();
-    updateReviewProgress();
-    updateStepperCounter();
-    if (inlinePopover && !inlinePopover.classList.contains('hidden') && currentActiveIssueId) {
-      updatePopoverDecisionUI(currentActiveIssueId);
-    }
-  }
-
   // =========================================================================
-  // Stepper, Dual-Scroll & In-Context Correction Popover
+  // Dual-Scroll, Stepper & In-Context Popover
   // =========================================================================
 
   function updateStepperCounter() {
@@ -1088,14 +1111,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const containerRect = container.getBoundingClientRect();
     const targetRect = targetEl.getBoundingClientRect();
 
-    // Check if target is already reasonably visible inside the container
     const isAlreadyVisible = (
       targetRect.top >= containerRect.top + 30 &&
       targetRect.bottom <= containerRect.bottom - 30
     );
-    if (isAlreadyVisible && !options.force) {
-      return;
-    }
+    if (isAlreadyVisible && !options.force) return;
 
     const relativeTop = targetRect.top - containerRect.top;
     const targetScrollTop = container.scrollTop + relativeTop - (container.clientHeight / 2) + (targetRect.height / 2);
@@ -1106,34 +1126,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  let popoverTrackingAnim = null;
-  function startPopoverTracking(durationMs = 500) {
-    if (popoverTrackingAnim) cancelAnimationFrame(popoverTrackingAnim);
-    const start = performance.now();
-    function track(now) {
-      if (currentActiveIssueId && inlinePopover && !inlinePopover.classList.contains('hidden')) {
-        updatePopoverPosition(true);
-        if (now - start < durationMs) {
-          popoverTrackingAnim = requestAnimationFrame(track);
-        } else {
-          popoverTrackingAnim = null;
-        }
-      }
-    }
-    popoverTrackingAnim = requestAnimationFrame(track);
-  }
-
   function activateIssue(issueId, blockId, showPopover = true, source = 'nav') {
     if (!issueId) return;
     currentActiveIssueId = issueId;
 
     const targetIssue = docIssues.find(i => i.id === issueId);
 
-    // 1. Remove pulse and focus from all previous elements
+    // Remove previous active classes
     docViewer.querySelectorAll('.pulse-target').forEach(el => el.classList.remove('pulse-target', 'focused'));
     document.querySelectorAll('.suggestion-card').forEach(c => c.classList.remove('focused'));
 
-    // 2. Locate highlight span in document preview with robust fallback
+    // Highlight span in document
     let span = docViewer.querySelector(`.inline-error-highlight[data-issue-id="${issueId}"]`);
     if (!span && targetIssue) {
       const bId = targetIssue.block_id || blockId;
@@ -1153,23 +1156,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const docTarget = span || (blockId ? document.getElementById(`view_${blockId}`) : null);
     if (docTarget) {
       docTarget.classList.add('focused', 'pulse-target');
-      // Scroll document smoothly to center the error.
-      // If user clicked the document span itself, don't force a jump; otherwise force center-scroll
       scrollTargetInsideContainer(docViewer, docTarget, { force: source !== 'doc' });
     }
 
-    // 3. Focus & smoothly scroll matching card in suggestions list
+    // Highlight card in suggestion stream
     const activeCard = document.getElementById(`card_${issueId}`);
     if (activeCard) {
       activeCard.classList.add('focused');
-      // If user clicked the card itself, don't force a jump; otherwise force center-scroll
       scrollTargetInsideContainer(suggestionsList, activeCard, { force: source !== 'card' });
     }
 
-    // 4. Update Stepper Status Badge
     updateStepperCounter();
 
-    // 5. In-Context Popover ("see it and correct it right there itself")
+    // Popover placement
     if (showPopover && span && targetIssue && inlinePopover) {
       const errType = (targetIssue.error_type || 'grammar').toLowerCase();
       const typeLabel = errType.charAt(0).toUpperCase() + errType.slice(1);
@@ -1186,319 +1185,157 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const d = decisions[issueId] || { accepted: false, rejected: false, editedText: targetIssue.suggested_text };
-      if (popoverOrig) {
-        popoverOrig.innerHTML = formatDiffContent(targetIssue.original_text, errType === 'spacing');
-      }
-      if (popoverRepl) {
-        popoverRepl.innerHTML = formatDiffContent(d.editedText || targetIssue.suggested_text, errType === 'spacing');
-      }
+      if (popoverOrig) popoverOrig.textContent = targetIssue.original_text;
+      if (popoverRepl) popoverRepl.textContent = d.editedText || targetIssue.suggested_text;
 
       updatePopoverDecisionUI(issueId);
-
-      // Display and position popover
       inlinePopover.classList.remove('hidden');
-      updatePopoverPosition(true);
-
-      // Track popover position continuously during smooth scrolling
-      startPopoverTracking(500);
-    } else if (inlinePopover && (!showPopover || !span)) {
+      updatePopoverPosition();
+    } else if (inlinePopover) {
       inlinePopover.classList.add('hidden');
     }
   }
 
-  function updatePopoverPosition(force = false) {
+  function updatePopoverPosition() {
     if (!currentActiveIssueId || !inlinePopover || inlinePopover.classList.contains('hidden')) return;
 
     const span = docViewer.querySelector(`.inline-error-highlight[data-issue-id="${currentActiveIssueId}"]`);
-    if (!span) {
+    if (!span) return;
+
+    const paneRect = leftDocViewerState.getBoundingClientRect();
+    const spanRect = span.getBoundingClientRect();
+
+    if (spanRect.bottom < paneRect.top - 20 || spanRect.top > paneRect.bottom + 20) {
       inlinePopover.classList.add('hidden');
       return;
     }
 
-    const panel = docViewer.parentElement; // .doc-view-panel
-    if (!panel) return;
+    const popoverWidth = inlinePopover.offsetWidth || 340;
+    const popoverHeight = inlinePopover.offsetHeight || 150;
 
-    const panelRect = panel.getBoundingClientRect();
-    const spanRect = span.getBoundingClientRect();
-    const docViewerRect = docViewer.getBoundingClientRect();
-
-    // When not in force mode (e.g. user manual scroll), hide if span is far outside
-    if (!force) {
-      if (spanRect.bottom < docViewerRect.top - 80 || spanRect.top > docViewerRect.bottom + 80) {
-        inlinePopover.classList.add('hidden');
-        return;
-      }
+    let left = spanRect.left - paneRect.left;
+    if (left + popoverWidth > paneRect.width - 15) {
+      left = Math.max(10, paneRect.width - popoverWidth - 15);
     }
+    if (left < 10) left = 10;
 
-    const popoverWidth = inlinePopover.offsetWidth || 360;
-    const popoverHeight = inlinePopover.offsetHeight || 190;
-
-    // Centered horizontally over the span, clamped within panel bounds
-    let left = (spanRect.left + spanRect.width / 2) - panelRect.left - (popoverWidth / 2);
-    left = Math.max(16, Math.min(panelRect.width - popoverWidth - 16, left));
-
-    // Vertical placement: prefer below, flip above if close to bottom
-    let top = spanRect.bottom - panelRect.top + 10;
-    const fitsBelow = (top + popoverHeight <= panelRect.height - 16);
-    const arrow = inlinePopover.querySelector('.popover-arrow');
-
-    if (!fitsBelow && (spanRect.top - panelRect.top - popoverHeight - 10 > 10)) {
-      top = spanRect.top - panelRect.top - popoverHeight - 10;
-      inlinePopover.classList.add('popover-above');
-    } else {
+    const spaceBelow = paneRect.bottom - spanRect.bottom;
+    let top;
+    if (spaceBelow >= popoverHeight + 15 || spanRect.top - paneRect.top < popoverHeight + 15) {
+      top = spanRect.bottom - paneRect.top + 8;
       inlinePopover.classList.remove('popover-above');
+    } else {
+      top = spanRect.top - paneRect.top - popoverHeight - 8;
+      inlinePopover.classList.add('popover-above');
     }
 
-    inlinePopover.style.top = `${Math.round(top)}px`;
     inlinePopover.style.left = `${Math.round(left)}px`;
-
-    // Position arrow directly pointing to the highlighted word
-    if (arrow) {
-      const spanCenter = (spanRect.left + spanRect.width / 2) - panelRect.left;
-      let arrowLeft = spanCenter - left - 6;
-      arrowLeft = Math.max(20, Math.min(popoverWidth - 28, arrowLeft));
-      arrow.style.left = `${Math.round(arrowLeft)}px`;
-    }
+    inlinePopover.style.top = `${Math.round(top)}px`;
   }
 
   function updatePopoverDecisionUI(issueId) {
-    if (!inlinePopover || inlinePopover.classList.contains('hidden')) return;
-    const issue = docIssues.find(i => i.id === issueId);
-    if (!issue) return;
-    const d = decisions[issueId] || { accepted: false, rejected: false, editedText: issue.suggested_text };
-    if (d.accepted) {
-      if (popoverBtnAccept) {
-        popoverBtnAccept.textContent = '✓ Accepted';
-        popoverBtnAccept.className = 'btn btn-success btn-sm';
-      }
-      if (popoverBtnReject) {
-        popoverBtnReject.textContent = 'Revert';
-        popoverBtnReject.className = 'btn btn-secondary btn-sm';
-      }
-    } else if (d.rejected) {
-      if (popoverBtnAccept) {
-        popoverBtnAccept.textContent = '✓ Accept';
-        popoverBtnAccept.className = 'btn btn-outline-success btn-sm';
-      }
-      if (popoverBtnReject) {
-        popoverBtnReject.textContent = '✗ Dismissed';
-        popoverBtnReject.className = 'btn btn-danger btn-sm';
-      }
-    } else {
-      if (popoverBtnAccept) {
-        popoverBtnAccept.textContent = '✓ Accept';
-        popoverBtnAccept.className = 'btn btn-success btn-sm';
-      }
-      if (popoverBtnReject) {
-        popoverBtnReject.textContent = '✗ Reject';
-        popoverBtnReject.className = 'btn btn-outline-danger btn-sm';
-      }
+    const d = decisions[issueId] || {};
+    if (popoverBtnAccept) {
+      popoverBtnAccept.style.opacity = d.accepted ? '1' : '0.85';
     }
-
-    if (popoverRepl && d.editedText) {
-      popoverRepl.innerHTML = formatDiffContent(d.editedText, (issue.error_type || '').toLowerCase() === 'spacing');
+    if (popoverBtnReject) {
+      popoverBtnReject.style.opacity = d.rejected ? '1' : '0.85';
     }
   }
 
-  function nextIssue(preferPending = false) {
+  if (btnClosePopover) {
+    btnClosePopover.addEventListener('click', () => inlinePopover.classList.add('hidden'));
+  }
+
+  if (popoverBtnAccept) {
+    popoverBtnAccept.addEventListener('click', () => {
+      if (currentActiveIssueId) {
+        setDecision(currentActiveIssueId, true, false, true);
+        setTimeout(() => nextIssue(true), 120);
+      }
+    });
+  }
+
+  if (popoverBtnReject) {
+    popoverBtnReject.addEventListener('click', () => {
+      if (currentActiveIssueId) {
+        setDecision(currentActiveIssueId, false, true, true);
+        setTimeout(() => nextIssue(true), 120);
+      }
+    });
+  }
+
+  if (popoverBtnPrev) popoverBtnPrev.addEventListener('click', () => prevIssue());
+  if (popoverBtnNext) popoverBtnNext.addEventListener('click', () => nextIssue(false));
+  if (btnPrevError) btnPrevError.addEventListener('click', () => prevIssue());
+  if (btnNextError) btnNextError.addEventListener('click', () => nextIssue(false));
+
+  function nextIssue(autoAdvance = false) {
     const visible = getVisibleIssues();
     if (visible.length === 0) return;
-
-    let targetIndex = -1;
-    const currentIndex = visible.findIndex(i => i.id === currentActiveIssueId);
-
-    if (preferPending) {
-      for (let i = currentIndex + 1; i < visible.length; i++) {
-        const d = decisions[visible[i].id] || {};
-        if (!d.accepted && !d.rejected) {
-          targetIndex = i;
-          break;
-        }
-      }
-      if (targetIndex === -1) {
-        for (let i = 0; i <= currentIndex; i++) {
-          const d = decisions[visible[i].id] || {};
-          if (!d.accepted && !d.rejected) {
-            targetIndex = i;
-            break;
-          }
-        }
-      }
-    }
-
-    if (targetIndex === -1) {
-      targetIndex = (currentIndex + 1) % visible.length;
-    }
-
-    const nextTarget = visible[targetIndex];
-    if (nextTarget) {
-      activateIssue(nextTarget.id, nextTarget.block_id, true);
-    }
+    let currentIdx = visible.findIndex(i => i.id === currentActiveIssueId);
+    let nextIdx = (currentIdx + 1) % visible.length;
+    activateIssue(visible[nextIdx].id, visible[nextIdx].block_id, true);
   }
 
   function prevIssue() {
     const visible = getVisibleIssues();
     if (visible.length === 0) return;
-    const currentIndex = visible.findIndex(i => i.id === currentActiveIssueId);
-    let prevIndex = currentIndex - 1;
-    if (prevIndex < 0) prevIndex = visible.length - 1;
-    const prevTarget = visible[prevIndex];
-    if (prevTarget) {
-      activateIssue(prevTarget.id, prevTarget.block_id, true);
-    }
+    let currentIdx = visible.findIndex(i => i.id === currentActiveIssueId);
+    let prevIdx = (currentIdx - 1 + visible.length) % visible.length;
+    activateIssue(visible[prevIdx].id, visible[prevIdx].block_id, true);
   }
 
-  function scrollToDocumentHighlight(issueId, blockId) {
-    activateIssue(issueId, blockId, true);
-  }
+  function setDecision(issueId, accepted, rejected, autoAdvance = false) {
+    const targetIssue = docIssues.find(i => i.id === issueId);
+    const targetKey = (targetIssue && targetIssue.original_text ? targetIssue.original_text.trim().toLowerCase() : '');
 
-  function focusSuggestionCard(issueId) {
-    activateIssue(issueId, null, true);
-  }
+    // Sync all repeated occurrences in document
+    docIssues.forEach(issue => {
+      const matchKey = (issue.original_text || '').trim().toLowerCase();
+      if (issue.id === issueId || (targetKey && matchKey === targetKey)) {
+        decisions[issue.id] = {
+          accepted,
+          rejected,
+          autoAccepted: false,
+          editedText: decisions[issue.id]?.editedText || issue.suggested_text
+        };
+      }
+    });
 
-  function highlightDocumentSpan(issueId, active) {
-    const span = docViewer.querySelector(`.inline-error-highlight[data-issue-id="${issueId}"]`);
-    if (span) {
-      if (active) {
-        span.classList.add('focused');
-      } else if (currentActiveIssueId !== issueId) {
-        span.classList.remove('focused');
+    updateFilterCounts();
+    renderSuggestionsList();
+    updatePopoverDecisionUI(issueId);
+
+    if (autoAdvance) {
+      const visible = getVisibleIssues();
+      const currentIdx = visible.findIndex(i => i.id === issueId);
+      if (currentIdx >= 0 && currentIdx < visible.length - 1) {
+        setTimeout(() => {
+          activateIssue(visible[currentIdx + 1].id, visible[currentIdx + 1].block_id, true);
+        }, 120);
       }
     }
   }
 
-  // Stepper Toolbar Listeners
-  if (btnPrevError) {
-    btnPrevError.addEventListener('click', (e) => {
-      e.stopPropagation();
-      prevIssue();
-    });
-  }
-  if (btnNextError) {
-    btnNextError.addEventListener('click', (e) => {
-      e.stopPropagation();
-      nextIssue(false);
+  // Bulk Decision Actions
+  if (btnRejectAll) {
+    btnRejectAll.addEventListener('click', () => {
+      docIssues.forEach(issue => setDecision(issue.id, false, true));
     });
   }
 
-  // Header click handler: Clicking "Corrections & Suggestions" navigates to next pending issue
-  const suggPanelHeader = document.querySelector('.suggestions-panel .panel-header');
-  if (suggPanelHeader) {
-    suggPanelHeader.style.cursor = 'pointer';
-    suggPanelHeader.title = 'Click to focus next pending suggestion';
-    suggPanelHeader.addEventListener('click', (e) => {
-      if (e.target.closest('button')) return;
-      nextIssue(true);
-    });
-  }
-
-  // In-Context Popover Listeners
-  if (btnClosePopover) {
-    btnClosePopover.addEventListener('click', (e) => {
-      e.stopPropagation();
-      inlinePopover.classList.add('hidden');
-    });
-  }
-
-  if (popoverBtnPrev) {
-    popoverBtnPrev.addEventListener('click', (e) => {
-      e.stopPropagation();
-      prevIssue();
-    });
-  }
-  if (popoverBtnNext) {
-    popoverBtnNext.addEventListener('click', (e) => {
-      e.stopPropagation();
-      nextIssue(false);
-    });
-  }
-
-  if (popoverBtnAccept) {
-    popoverBtnAccept.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!currentActiveIssueId) return;
-      const targetId = currentActiveIssueId;
-      setDecision(targetId, true, false, true);
-      updatePopoverDecisionUI(targetId);
-      setTimeout(() => {
-        nextIssue(true);
-      }, 180);
-    });
-  }
-
-  if (popoverBtnReject) {
-    popoverBtnReject.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!currentActiveIssueId) return;
-      const targetId = currentActiveIssueId;
-      const d = decisions[targetId] || {};
-      if (d.accepted) {
-        setDecision(targetId, false, false, true); // Revert
-      } else {
-        setDecision(targetId, false, true, true); // Dismiss
+  // Re-position popover on doc scroll
+  if (docViewer) {
+    docViewer.addEventListener('scroll', () => {
+      if (inlinePopover && !inlinePopover.classList.contains('hidden')) {
+        updatePopoverPosition();
       }
-      updatePopoverDecisionUI(targetId);
-      setTimeout(() => {
-        nextIssue(true);
-      }, 180);
-    });
-  }
-
-  // Keep popover pinned to highlight during scrolling or window resizing
-  docViewer.addEventListener('scroll', () => {
-    if (inlinePopover && !inlinePopover.classList.contains('hidden')) {
-      updatePopoverPosition();
-    }
-  }, { passive: true });
-
-  window.addEventListener('resize', () => {
-    if (inlinePopover && !inlinePopover.classList.contains('hidden')) {
-      updatePopoverPosition();
-    }
-  }, { passive: true });
-
-  // Bulk Actions
-  btnAcceptAll.addEventListener('click', () => {
-    docIssues.forEach(issue => {
-      setDecision(issue.id, true, false);
-    });
-  });
-
-  btnRejectAll.addEventListener('click', () => {
-    docIssues.forEach(issue => {
-      setDecision(issue.id, false, true);
-    });
-  });
-
-  function updateReviewProgress() {
-    let accepted = 0;
-    let rejected = 0;
-    let pending = 0;
-
-    docIssues.forEach(issue => {
-      const d = decisions[issue.id];
-      if (d.accepted) accepted++;
-      else if (d.rejected) rejected++;
-      else pending++;
-    });
-
-    acceptedCountBadge.textContent = `${accepted} Accepted`;
-    rejectedCountBadge.textContent = `${rejected} Rejected`;
-    pendingCountBadge.textContent = `${pending} Pending`;
-
-    const reviewed = accepted + rejected;
-    const total = docIssues.length;
-    const pct = total > 0 ? Math.round((reviewed / total) * 100) : 0;
-
-    progressSummary.textContent = `${reviewed} of ${total} reviewed (${pct}%)`;
-    applyCountSummary.textContent = `${accepted} correction${accepted === 1 ? '' : 's'} ready to apply`;
-    progressBar.style.width = `${pct}%`;
-
-    btnApplyAndDownload.disabled = false;
+    }, { passive: true });
   }
 
   // =========================================================================
-  // Apply Corrections & Download Updated .docx
+  // Download Clean .docx Document
   // =========================================================================
 
   btnApplyAndDownload.addEventListener('click', async () => {
@@ -1518,22 +1355,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    if (acceptedItems.length === 0) {
-      if (!confirm('No corrections were accepted. Do you still want to download the document without changes?')) {
-        return;
-      }
-    }
-
-    showLoading('Applying Corrections & Building Document...', 'Updating Word runs, preserving formatting, and generating your clean .docx file...');
+    showLoading('Building Clean Word Document...', 'Applying approved changes, preserving styling, tables, and typography...');
 
     try {
       const resp = await authFetch('/api/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId,
-          decisions: acceptedItems
-        })
+        body: JSON.stringify({ session_id: sessionId, decisions: acceptedItems })
       });
 
       if (!resp.ok) {
@@ -1541,8 +1369,7 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(errorData.detail || 'Download request failed');
       }
 
-      // Extract filename from Content-Disposition header if available
-      let downloadFilename = 'Document_corrected.docx';
+      let downloadFilename = 'Clean_Document.docx';
       const disposition = resp.headers.get('Content-Disposition');
       if (disposition && disposition.includes('filename=')) {
         const match = disposition.match(/filename="?([^"]+)"?/);
@@ -1561,49 +1388,62 @@ document.addEventListener('DOMContentLoaded', () => {
       a.remove();
 
       hideLoading();
-      alert(`Success! "${downloadFilename}" has been generated and downloaded with your approved corrections.`);
+      alert(`Success! "${downloadFilename}" downloaded with all approved corrections.`);
     } catch (err) {
       hideLoading();
-      alert('Error generating document: ' + err.message);
+      alert('Error exporting document: ' + err.message);
     }
   });
 
-  // Comprehensive Keyboard Shortcuts:
-  // - ArrowRight / ArrowDown: Next error
-  // - ArrowLeft / ArrowUp: Previous error
-  // - A: Accept active error and advance
-  // - R or X: Reject/Dismiss active error and advance
-  // - Escape: Close in-context popover
+  // Nav items click handlers
+  if (navProofread) {
+    navProofread.addEventListener('click', () => {
+      document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+      navProofread.classList.add('active');
+    });
+  }
+
+  if (navDocMode) {
+    navDocMode.addEventListener('click', () => {
+      document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+      navDocMode.classList.add('active');
+      if (dropZone) dropZone.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+
+  if (navQuickPaste) {
+    navQuickPaste.addEventListener('click', () => {
+      document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+      navQuickPaste.classList.add('active');
+      if (rawTextInput) rawTextInput.focus();
+    });
+  }
+
+  // Keyboard Shortcuts
   document.addEventListener('keydown', (e) => {
-    // Ignore when typing inside form elements
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
 
-    if (reviewSection.classList.contains('active')) {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextIssue(false);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      prevIssue();
+    } else if (e.key === 'a' || e.key === 'A') {
+      if (currentActiveIssueId) {
         e.preventDefault();
-        nextIssue(false);
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        prevIssue();
-      } else if (e.key === 'a' || e.key === 'A') {
-        if (currentActiveIssueId) {
-          e.preventDefault();
-          const targetId = currentActiveIssueId;
-          setDecision(targetId, true, false, true);
-          updatePopoverDecisionUI(targetId);
-          setTimeout(() => nextIssue(true), 180);
-        }
-      } else if (e.key === 'r' || e.key === 'R' || e.key === 'x' || e.key === 'X') {
-        if (currentActiveIssueId) {
-          e.preventDefault();
-          const targetId = currentActiveIssueId;
-          setDecision(targetId, false, true, true);
-          updatePopoverDecisionUI(targetId);
-          setTimeout(() => nextIssue(true), 180);
-        }
-      } else if (e.key === 'Escape') {
-        if (inlinePopover) inlinePopover.classList.add('hidden');
+        setDecision(currentActiveIssueId, true, false, true);
       }
+    } else if (e.key === 'r' || e.key === 'R' || e.key === 'x' || e.key === 'X') {
+      if (currentActiveIssueId) {
+        e.preventDefault();
+        setDecision(currentActiveIssueId, false, true, true);
+      }
+    } else if (e.key === 'Escape') {
+      if (inlinePopover) inlinePopover.classList.add('hidden');
     }
   });
+
+  // Initialize
+  initAuth();
 });

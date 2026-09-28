@@ -271,6 +271,64 @@ async def analyze_document(
         "total_issues": len(issues)
     }
 
+@app.post("/api/analyze-text", dependencies=[Depends(require_team_auth)])
+async def analyze_text(
+    text: str = Form(...),
+    api_key: Optional[str] = Form(None),
+    tone: Optional[str] = Form("business")
+):
+    """
+    Creates an in-memory Word document from direct text, extracts blocks,
+    and runs Gemini proofreading. Supports Wordvice-style direct typing.
+    """
+    clean_text = text.strip()
+    if not clean_text:
+        raise HTTPException(status_code=400, detail="Text cannot be empty.")
+
+    env_key = os.getenv("GEMINI_API_KEY")
+    if env_key:
+        env_key = env_key.strip().strip("'\"")
+    user_key = api_key.strip().strip("'\"") if api_key and api_key.strip() else None
+    effective_key = user_key or env_key
+    if not effective_key:
+        raise HTTPException(
+            status_code=400,
+            detail="No Gemini API Key provided. Please provide an API key in the UI or set GEMINI_API_KEY in the server .env file."
+        )
+
+    doc = Document()
+    paragraphs = [p.strip() for p in clean_text.split("\n") if p.strip()]
+    if not paragraphs:
+        paragraphs = [clean_text]
+    for p in paragraphs:
+        doc.add_paragraph(p)
+
+    out = io.BytesIO()
+    doc.save(out)
+    file_bytes = out.getvalue()
+
+    doc_obj, blocks = DocxProcessor.extract_blocks(file_bytes)
+    if not blocks:
+        raise HTTPException(status_code=400, detail="No readable text found in input.")
+
+    try:
+        proofreader = GeminiProofreader(api_key=effective_key)
+        issues = proofreader.analyze_blocks(blocks, style_tone=tone or "business")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gemini analysis error: {str(e)}")
+
+    session_id = str(uuid.uuid4())
+    save_session(session_id, "Document_Text.docx", file_bytes, blocks, issues)
+
+    return {
+        "session_id": session_id,
+        "filename": "Document_Text.docx",
+        "blocks": blocks,
+        "issues": issues,
+        "total_blocks": len(blocks),
+        "total_issues": len(issues)
+    }
+
 class DecisionItem(BaseModel):
     issue_id: str
     block_id: str

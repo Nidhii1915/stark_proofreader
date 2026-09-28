@@ -3,410 +3,503 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stark Proofreader - Premium Word Document AI Proofreader</title>
+  <title>Stark Proofreader - AI Word & Text Proofreader</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23C41E3A'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8' stroke='%23B4944C' stroke-width='2' fill='none'/></svg>">
-  <link rel="stylesheet" href="/static/style.css?v=stark5.2">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23881337'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8' stroke='%23B4944C' stroke-width='2' fill='none'/></svg>">
+  <link rel="stylesheet" href="/static/style.css?v=stark6.0">
 </head>
 <body class="theme-light">
-  <!-- Top Navigation -->
-  <header class="navbar">
-    <div class="nav-brand">
-      <div class="brand-logo">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-          <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>
-      </div>
-      <div class="brand-text">
-        <span class="brand-title">Stark Proofreader<span class="brand-dot">.</span></span>
-        <span class="brand-subtitle">Powered by Stark Premium • Enterprise Word AI</span>
-      </div>
-    </div>
 
-    <div class="nav-actions">
-      <!-- Team Access Status Badge & Lock Button -->
-      <div id="authStatusBadge" class="status-badge status-auth hidden">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
-        <span class="status-text">Team Access</span>
-      </div>
-
-      <div id="apiKeyStatus" class="status-badge status-checking">
-        <span class="status-dot"></span>
-        <span class="status-text">Checking API...</span>
-      </div>
-      
-      <button id="btnSettings" class="btn btn-secondary btn-icon" title="Configure API Key & Settings">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-        <span>API Key</span>
-      </button>
-
-      <button id="btnLockSession" class="btn btn-secondary btn-icon hidden" title="Lock Workspace & Exit">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
-        <span>Lock</span>
-      </button>
-
-      <button id="themeToggle" class="btn btn-secondary btn-icon" title="Toggle Light/Dark Theme">
-        <svg id="themeIconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="1" x2="12" y2="3"></line>
-          <line x1="12" y1="21" x2="12" y2="23"></line>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-          <line x1="1" y1="12" x2="3" y2="12"></line>
-          <line x1="21" y1="12" x2="23" y2="12"></line>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-        </svg>
-      </button>
-    </div>
-  </header>
-
-  <!-- Main Container -->
-  <main class="main-container">
-    <!-- VIEW 0: TEAM PASSCODE GATE -->
-    <section id="loginSection" class="view-panel login-stage active">
-      <div class="login-wrapper">
-        <div class="login-card">
-          <div class="login-brand-header">
-            <div class="login-logo-ring">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
-              </svg>
-            </div>
-            <div class="login-brand-tag">Stark Premium Security</div>
-            <h2 class="login-title">Team Workspace Login</h2>
-            <p class="login-subtitle">
-              Enter your team passcode to access the Stark Proofreader workspace.
-            </p>
-          </div>
-
-          <form id="loginForm" class="login-form" autocomplete="off" onsubmit="return false;">
-            <div class="form-group">
-              <label for="inputPasscode" class="form-label">Team Passcode</label>
-              <div class="passcode-input-wrap">
-                <input 
-                  type="password" 
-                  id="inputPasscode" 
-                  class="text-input login-input" 
-                  placeholder="Enter team passcode..." 
-                  autocomplete="current-password"
-                  autofocus
-                  required
-                >
-                <button 
-                  type="button" 
-                  id="btnTogglePasscodeVis" 
-                  class="btn-toggle-eye" 
-                  title="Show/Hide Passcode"
-                  tabindex="-1"
-                >
-                  <svg id="passcodeEyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div id="loginFeedback" class="login-feedback hidden"></div>
-
-            <button type="submit" id="btnUnlock" class="btn btn-primary btn-unlock">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
-              </svg>
-              <span>Unlock Workspace</span>
-            </button>
-          </form>
-
-          <div class="login-footer">
-            <div class="login-hint-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-              <span>Restricted to authorized team members. Ask your team lead if you need the passcode.</span>
-            </div>
-          </div>
+  <!-- TEAM PASSCODE MODAL / OVERLAY -->
+  <div id="loginSection" class="login-overlay active">
+    <div class="login-card">
+      <div class="login-brand-header">
+        <div class="login-logo-ring">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
         </div>
-      </div>
-    </section>
-
-    <!-- VIEW 1: UPLOAD STAGE -->
-    <section id="uploadSection" class="view-panel">
-      <div class="hero-header">
-        <div class="hero-badge">Stark Premium Document Intelligence</div>
-        <h1 class="hero-title">Polish your Word documents to perfection<span class="brand-dot">.</span></h1>
-        <p class="hero-desc">
-          Upload any Microsoft Word (<code>.docx</code>) presentation or report. Our AI engine detects grammar, spelling, double spaces, and missing punctuation. Evident errors and typos are automatically corrected while protecting your branding, titles, and layout.
+        <div class="login-brand-tag">Stark Premium Security</div>
+        <h2 class="login-title">Team Workspace Login</h2>
+        <p class="login-subtitle">
+          Enter your team passcode to access the Stark Proofreader workspace.
         </p>
       </div>
 
-      <div class="upload-card">
-        <!-- Drag & Drop Zone -->
-        <div id="dropZone" class="drop-zone">
-          <input type="file" id="fileInput" accept=".docx" class="file-input-hidden">
-          <div class="drop-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-          </div>
-          <div class="drop-prompt">
-            <span class="drop-primary">Choose a Word document</span> or drag & drop here
-          </div>
-          <div class="drop-info">Supports .docx files up to 25 MB</div>
-          <div id="selectedFileInfo" class="selected-file-pill hidden">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            </svg>
-            <span id="selectedFileName">filename.docx</span>
-            <button id="btnRemoveFile" class="btn-remove-file" title="Remove file">&times;</button>
-          </div>
-        </div>
-
-        <!-- Options row -->
-        <div class="upload-options">
-          <div class="option-group">
-            <label for="toneSelect" class="option-label">Proofreading Tone & Style:</label>
-            <select id="toneSelect" class="select-input">
-              <option value="business" selected>Business Professional (Recommended)</option>
-              <option value="concise">Executive & Concise (Direct & Crisp)</option>
-              <option value="strict">Strict Grammar & Spelling (No tone changes)</option>
-              <option value="formal">Formal & Academic (High rigor)</option>
-              <option value="casual">Friendly & Approachable</option>
-            </select>
-          </div>
-
-          <div class="option-actions">
-            <button id="btnLoadSample" class="btn btn-secondary">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <path d="M14 2v6h6"></path>
+      <form id="loginForm" class="login-form" autocomplete="off" onsubmit="return false;">
+        <div class="form-group">
+          <label for="inputPasscode" class="form-label">Team Passcode</label>
+          <div class="passcode-input-wrap">
+            <input 
+              type="password" 
+              id="inputPasscode" 
+              class="text-input login-input" 
+              placeholder="Enter team passcode..." 
+              autocomplete="current-password"
+              autofocus
+              required
+            >
+            <button 
+              type="button" 
+              id="btnTogglePasscodeVis" 
+              class="btn-toggle-eye" 
+              title="Show/Hide Passcode"
+              tabindex="-1"
+            >
+              <svg id="passcodeEyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
               </svg>
-              <span>Try with Sample Report</span>
-            </button>
-            <button id="btnStartAnalysis" class="btn btn-primary" disabled>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-              <span>Scan & Check Document</span>
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Feature Highlights -->
-      <div class="features-grid">
-        <div class="feature-item">
-          <div class="feature-icon icon-review">✓</div>
-          <div class="feature-title">Human-in-the-Loop</div>
-          <div class="feature-desc">You are always in control. Review each suggestion individually or in bulk before any change is applied.</div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-icon icon-format">📄</div>
-          <div class="feature-title">Preserves Word Formatting</div>
-          <div class="feature-desc">Fonts, headings, bold, italics, tables, and spacing stay intact without scrambling document styles.</div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-icon icon-team">👥</div>
-          <div class="feature-title">Ready for Teammates</div>
-          <div class="feature-desc">Zero software installation for your team. Share the network link or run locally in any browser.</div>
-        </div>
-      </div>
-    </section>
+        <div id="loginFeedback" class="login-feedback hidden"></div>
 
-    <!-- LOADING OVERLAY -->
-    <div id="loadingOverlay" class="loading-overlay hidden">
-      <div class="loading-card">
-        <div class="spinner"></div>
-        <h3 id="loadingTitle">Fast AI Proofreading...</h3>
-        <p id="loadingMsg">Extracting text blocks and checking with Gemini High-Speed AI...</p>
+        <button type="submit" id="btnUnlock" class="btn btn-primary btn-unlock">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+          </svg>
+          <span>Unlock Workspace</span>
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <div class="login-hint-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>Restricted to authorized team members. Default passcode is available from your team admin.</span>
+        </div>
       </div>
     </div>
+  </div>
 
-    <!-- VIEW 2: INTERACTIVE REVIEW WORKSPACE -->
-    <section id="reviewSection" class="view-panel">
-      <!-- Review Toolbar -->
-      <div class="review-toolbar">
-        <div class="doc-meta">
-          <button id="btnBackToUpload" class="btn btn-secondary btn-sm" title="Upload another document">
+  <!-- MAIN APP SHELL (Wordvice AI Format) -->
+  <div class="app-layout">
+    
+    <!-- 1. LEFT SIDEBAR NAVIGATION -->
+    <aside class="app-sidebar" id="appSidebar">
+      <!-- Sidebar Header -->
+      <div class="sidebar-header">
+        <div class="brand-badge-box">
+          <div class="brand-crest">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <div class="brand-title-wrap">
+            <span class="brand-name">Stark<span class="brand-dot">AI</span></span>
+            <span class="brand-sub">Proofreader</span>
+          </div>
+        </div>
+        <button id="btnToggleSidebar" class="btn-sidebar-collapse" title="Collapse sidebar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav">
+        <button class="nav-item active" id="navProofread" title="AI Proofreader Workspace">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+          </span>
+          <span class="nav-label">AI Proofreader</span>
+        </button>
+
+        <button class="nav-item" id="navDocMode" title="Word (.docx) Document Mode">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+          </span>
+          <span class="nav-label">Word Doc (.docx)</span>
+        </button>
+
+        <button class="nav-item" id="navQuickPaste" title="Direct Text Editor">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="4" y1="9" x2="20" y2="9"></line>
+              <line x1="4" y1="15" x2="20" y2="15"></line>
+              <line x1="10" y1="3" x2="8" y2="21"></line>
+              <line x1="16" y1="3" x2="14" y2="21"></line>
+            </svg>
+          </span>
+          <span class="nav-label">Quick Text Editor</span>
+        </button>
+
+        <div class="sidebar-divider"></div>
+
+        <button class="nav-item" id="btnSettingsNav" title="Gemini AI Key & Model">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </span>
+          <span class="nav-label">Gemini AI Key</span>
+          <span id="sidebarApiKeyDot" class="nav-status-dot dot-ready"></span>
+        </button>
+
+        <button class="nav-item" id="btnRulesNav" title="Grammar & Sensitivity Rules">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+          </span>
+          <span class="nav-label">Proofreading Rules</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer Controls -->
+      <div class="sidebar-footer">
+        <button id="themeToggle" class="sidebar-footer-btn" title="Toggle Light/Dark Theme">
+          <svg id="themeIconSun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <span class="nav-label">Toggle Theme</span>
+        </button>
+
+        <button id="btnLockSession" class="sidebar-footer-btn" title="Lock Workspace">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span class="nav-label">Lock Session</span>
+        </button>
+
+        <div class="sidebar-tier-badge">
+          <div class="tier-dot"></div>
+          <div class="tier-details">
+            <span class="tier-name">Stark Premium</span>
+            <span class="tier-ver">v6.0 Classy Edition</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 2. MAIN APPLICATION WORKSPACE -->
+    <main class="app-main">
+      
+      <!-- Top Bar: Title & Status -->
+      <header class="main-topbar">
+        <div class="topbar-left">
+          <h1 class="topbar-heading">AI Proofreader</h1>
+          <div id="activeDocTag" class="active-doc-tag hidden">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            </svg>
+            <span id="activeDocTitle">Quarterly_Report.docx</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <button id="btnLoadSample" class="btn btn-secondary btn-sm" title="Test with a realistic sample report">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
             </svg>
-            <span>Back</span>
+            <span>Try Sample Report</span>
           </button>
-          <span id="reviewDocName" class="doc-title-pill">Quarterly_Report.docx</span>
-        </div>
 
-        <!-- Filter Chips -->
-        <div class="filter-chips">
-          <button class="chip active" data-filter="needs_review">Needs Review <span id="countNeedsReview" class="chip-count chip-count-amber">0</span></button>
-          <button class="chip" data-filter="auto_accepted">Auto-Corrected <span id="countAutoAccepted" class="chip-count chip-count-green">0</span></button>
-          <button class="chip" data-filter="all">All <span id="countAll" class="chip-count">0</span></button>
-          <button class="chip" data-filter="spelling">Spelling <span id="countSpelling" class="chip-count">0</span></button>
-          <button class="chip" data-filter="grammar">Grammar <span id="countGrammar" class="chip-count">0</span></button>
-          <button class="chip" data-filter="spacing">Spacing & Punctuation <span id="countSpacing" class="chip-count">0</span></button>
-          <button class="chip" data-filter="clarity">Style & Clarity <span id="countClarity" class="chip-count">0</span></button>
-        </div>
-
-        <!-- Bulk Review Actions & Stepper -->
-        <div class="toolbar-bulk-actions">
-          <div class="stepper-nav">
-            <button id="btnPrevError" class="btn btn-secondary btn-sm" title="Previous error (Keyboard: Left / Up Arrow)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-              <span>Prev</span>
-            </button>
-            <span id="errorCounterBadge" class="stepper-counter">0 / 0</span>
-            <button id="btnNextError" class="btn btn-secondary btn-sm" title="Next error (Keyboard: Right / Down Arrow)">
-              <span>Next</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </button>
+          <div id="apiKeyStatus" class="status-pill status-ready" title="Gemini AI connection status">
+            <span class="status-dot"></span>
+            <span class="status-text">Gemini Ready</span>
           </div>
 
-          <button id="btnAcceptAll" class="btn btn-outline-success btn-sm">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Accept All</span>
-          </button>
-          <button id="btnRejectAll" class="btn btn-outline-danger btn-sm">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-            <span>Reject All</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Smart Summary Banner -->
-      <div id="autoAcceptBanner" class="smart-banner">
-        <div class="banner-icon">✨</div>
-        <div class="banner-text">
-          <strong id="bannerAutoCount">0 spelling & evident grammar errors</strong> were automatically corrected for you. 
-          <span id="bannerPendingText">0 suggestions need your review.</span>
-        </div>
-        <div class="banner-actions">
-          <button id="btnViewPendingOnly" class="btn btn-secondary btn-sm">Review Pending Only</button>
-          <button id="btnAcceptAllRemaining" class="btn btn-primary btn-sm">Accept Remaining & Download</button>
-          <button id="btnCloseBanner" class="btn-banner-close" title="Dismiss banner">&times;</button>
-        </div>
-      </div>
-
-      <!-- Split Screen Workspace -->
-      <div class="workspace-grid">
-        <!-- Left Column: Document View with in-context highlights -->
-        <div class="doc-view-panel">
-          <div class="panel-header">
-            <h3>Document Preview</h3>
-            <span class="panel-hint">Click any highlight to inspect and correct it right here</span>
+          <div id="authStatusBadge" class="status-pill status-auth" title="Team access active">
+            <span class="status-icon">🛡️</span>
+            <span class="status-text">Team Access</span>
           </div>
-          <div id="docViewer" class="doc-content-scroll">
-            <!-- Dynamic document paragraphs rendered here -->
-          </div>
+        </div>
+      </header>
 
-          <!-- In-Context Correction Popover ("Correct it right there itself") -->
-          <div id="inlinePopover" class="inline-popover hidden">
-            <div class="popover-arrow"></div>
-            <div class="popover-inner">
-              <div class="popover-header-row">
-                <span id="popoverBadge" class="type-badge badge-spelling">Spelling</span>
-                <span id="popoverSeverity" class="popover-severity">Error</span>
-                <button id="btnClosePopover" class="btn-popover-close" title="Close popover">&times;</button>
+      <!-- Signature Wordvice AI Card Wrapper -->
+      <div class="wordvice-card-wrapper">
+        <div class="wordvice-card">
+          
+          <!-- Sub-Toolbar (Language, Modes, Document Type, Action) -->
+          <div class="card-subtoolbar">
+            <div class="subtoolbar-controls">
+              
+              <!-- Language Selector -->
+              <div class="control-unit">
+                <select id="langSelect" class="subtoolbar-select" aria-label="Select Language">
+                  <option value="en-us" selected>English (US)</option>
+                  <option value="en-uk">English (UK)</option>
+                  <option value="en-ca">English (Canada)</option>
+                  <option value="en-au">English (Australia)</option>
+                </select>
               </div>
-              <p id="popoverExplanation" class="popover-explanation">Explanation</p>
-              <div class="popover-diff-box">
-                <del id="popoverOrig" class="diff-del"></del>
-                <span class="diff-arrow">→</span>
-                <ins id="popoverRepl" class="diff-ins"></ins>
-              </div>
-              <div class="popover-actions-row">
-                <div class="popover-nav-buttons">
-                  <button id="popoverBtnPrev" class="btn btn-secondary btn-xs" title="Previous error">◀</button>
-                  <span id="popoverIndexText" class="popover-counter">1 / 5</span>
-                  <button id="popoverBtnNext" class="btn btn-secondary btn-xs" title="Next error">▶</button>
+
+              <!-- Mode Pills (Light, Standard, Intensive, Concise) -->
+              <div class="control-unit mode-unit">
+                <span class="unit-label">Mode:</span>
+                <div class="mode-pills" id="modePillsGroup">
+                  <button type="button" class="mode-pill" data-mode="light" title="Focuses purely on obvious typos & misspellings">Light</button>
+                  <button type="button" class="mode-pill active" data-mode="standard" title="Standard: Auto-fixes spelling + evident grammar">Standard</button>
+                  <button type="button" class="mode-pill" data-mode="intensive" title="Intensive: Full style, clarity, and tone polishing">Intensive</button>
+                  <button type="button" class="mode-pill" data-mode="concise" title="Concise: Direct, crisp phrasing with low wordiness">Concise</button>
                 </div>
-                <div class="popover-decision-buttons">
-                  <button id="popoverBtnReject" class="btn btn-outline-danger btn-sm">✗ Reject</button>
-                  <button id="popoverBtnAccept" class="btn btn-success btn-sm">✓ Accept</button>
+              </div>
+
+              <!-- Document Type Dropdown -->
+              <div class="control-unit">
+                <span class="unit-label">Document Type :</span>
+                <select id="toneSelect" class="subtoolbar-select" aria-label="Select Document Type">
+                  <option value="business" selected>General & Business</option>
+                  <option value="formal">Academic & Research</option>
+                  <option value="strict">Technical & Strict</option>
+                  <option value="concise">Executive & Concise</option>
+                  <option value="casual">Friendly & Approachable</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Subtoolbar Right: Download Button (accessible when doc is analyzed) -->
+            <div class="subtoolbar-actions">
+              <button id="btnApplyAndDownload" class="btn btn-primary btn-sm hidden" title="Apply all confirmed decisions and download .docx">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Download Clean Document</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Two-Pane Split Workspace -->
+          <div class="card-split-workspace">
+            
+            <!-- LEFT PANE: Document Preview & Input Area -->
+            <div class="workspace-pane pane-left">
+              
+              <!-- State 1: Dropzone & Direct Text Input (Before analysis) -->
+              <div id="leftInputState" class="input-state-container">
+                <!-- Dropzone for .docx -->
+                <div id="dropZone" class="wordvice-dropzone">
+                  <input type="file" id="fileInput" accept=".docx" class="file-input-hidden">
+                  <div class="dropzone-content">
+                    <div class="dropzone-icon">
+                      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                        <polyline points="9 15 12 12 15 15"></polyline>
+                      </svg>
+                    </div>
+                    <div class="dropzone-text">
+                      <span class="dropzone-main">Choose a Word document</span> or drag & drop here
+                    </div>
+                    <div class="dropzone-hint">Supports .docx files up to 25 MB</div>
+                    <div id="selectedFileInfo" class="selected-file-pill hidden">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      </svg>
+                      <span id="selectedFileName">filename.docx</span>
+                      <button id="btnRemoveFile" class="btn-remove-tag" title="Remove file">&times;</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Textarea for Direct Text / Pasting -->
+                <div class="direct-text-wrapper">
+                  <textarea id="rawTextInput" class="wordvice-textarea" placeholder="Type or paste your text here to proofread instantly..."></textarea>
+                </div>
+              </div>
+
+              <!-- State 2: Active Word Document Viewer (with in-context highlights) -->
+              <div id="leftDocViewerState" class="doc-viewer-container hidden">
+                <div id="docViewer" class="doc-content-scroll">
+                  <!-- Word document paragraphs dynamically rendered here -->
+                </div>
+              </div>
+
+              <!-- In-Context Interactive Correction Popover ("see it and correct it right there itself") -->
+              <div id="inlinePopover" class="inline-popover hidden">
+                <div class="popover-arrow"></div>
+                <div class="popover-inner">
+                  <div class="popover-header-row">
+                    <span id="popoverBadge" class="type-badge badge-spelling">Spelling</span>
+                    <span id="popoverSeverity" class="popover-severity">Error</span>
+                    <button id="btnClosePopover" class="btn-popover-close" title="Close popover">&times;</button>
+                  </div>
+                  <p id="popoverExplanation" class="popover-explanation">Explanation</p>
+                  <div class="popover-diff-box">
+                    <del id="popoverOrig" class="diff-del"></del>
+                    <span class="diff-arrow">→</span>
+                    <ins id="popoverRepl" class="diff-ins"></ins>
+                  </div>
+                  <div class="popover-actions-row">
+                    <div class="popover-nav-buttons">
+                      <button id="popoverBtnPrev" class="btn btn-secondary btn-xs" title="Previous error">◀</button>
+                      <span id="popoverIndexText" class="popover-counter">1 / 5</span>
+                      <button id="popoverBtnNext" class="btn btn-secondary btn-xs" title="Next error">▶</button>
+                    </div>
+                    <div class="popover-decision-buttons">
+                      <button id="popoverBtnReject" class="btn-card-reject" title="Reject">✗</button>
+                      <button id="popoverBtnAccept" class="btn-card-accept" title="Accept">✓</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Left Pane Bottom Bar -->
+              <div class="pane-bottom-bar left-pane-bar">
+                <div class="bottom-bar-actions">
+                  <button id="btnStartAnalysis" class="btn btn-primary btn-proofread">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span id="btnStartText">Proofread Document</span>
+                  </button>
+
+                  <button id="btnClearDoc" class="btn-icon-square" title="Clear / Upload new document">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="bottom-bar-stats">
+                  <span id="wordCountLabel" class="stats-counter">0 words</span>
+                  <button id="btnCopyContent" class="btn-icon-square" title="Copy document text">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT PANE: Revisions & Suggestions Panel -->
+            <div class="workspace-pane pane-right">
+              
+              <!-- State 1: Empty state (Wordvice style before analysis) -->
+              <div id="rightEmptyState" class="empty-revisions-state">
+                <div class="empty-illustration">
+                  <svg width="90" height="80" viewBox="0 0 100 90" fill="none">
+                    <rect x="20" y="10" width="60" height="70" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+                    <line x1="32" y1="28" x2="68" y2="28" stroke="#CBD5E1" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="32" y1="40" x2="58" y2="40" stroke="#CBD5E1" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="32" y1="52" x2="48" y2="52" stroke="#CBD5E1" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="68" cy="58" r="14" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.5"/>
+                    <path d="M64 58l3 3 5-5" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <h4 class="empty-title">No text is detected.</h4>
+                <p class="empty-subtitle">Choose a Word document or enter text and click <strong>Proofread</strong> to see the revision.</p>
+              </div>
+
+              <!-- State 2: Active Review Cards & Filters -->
+              <div id="rightActiveState" class="active-revisions-container hidden">
+                
+                <!-- Smart Auto-Correction Banner -->
+                <div id="autoAcceptBanner" class="smart-banner">
+                  <div class="banner-icon">✨</div>
+                  <div class="banner-text">
+                    <strong id="bannerAutoCount">0 errors</strong> auto-corrected.
+                    <span id="bannerPendingText">0 suggestions need your review.</span>
+                  </div>
+                  <div class="banner-actions">
+                    <button id="btnViewPendingOnly" class="btn btn-secondary btn-xs">Pending Only</button>
+                    <button id="btnCloseBanner" class="btn-banner-close" title="Dismiss banner">&times;</button>
+                  </div>
+                </div>
+
+                <!-- Filter Chips Row -->
+                <div class="filter-chips-row">
+                  <button class="chip active" data-filter="needs_review">Needs Review <span id="countNeedsReview" class="chip-count chip-count-amber">0</span></button>
+                  <button class="chip" data-filter="auto_accepted">Auto-Corrected <span id="countAutoAccepted" class="chip-count chip-count-green">0</span></button>
+                  <button class="chip" data-filter="all">All <span id="countAll" class="chip-count">0</span></button>
+                  <button class="chip" data-filter="spelling">Spelling <span id="countSpelling" class="chip-count">0</span></button>
+                  <button class="chip" data-filter="grammar">Grammar <span id="countGrammar" class="chip-count">0</span></button>
+                  <button class="chip" data-filter="spacing">Spacing <span id="countSpacing" class="chip-count">0</span></button>
+                  <button class="chip" data-filter="clarity">Style <span id="countClarity" class="chip-count">0</span></button>
+                </div>
+
+                <!-- Suggestions Stream List -->
+                <div id="suggestionsList" class="suggestions-list-scroll">
+                  <!-- Suggestion cards dynamically injected here -->
+                </div>
+              </div>
+
+              <!-- Right Pane Bottom Stepper / Navigation Bar -->
+              <div class="pane-bottom-bar right-pane-bar">
+                <div class="stepper-controls">
+                  <button id="btnPrevError" class="stepper-btn" title="Previous suggestion (Left Arrow)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                  </button>
+                  <span id="errorCounterBadge" class="stepper-counter">0 / 0</span>
+                  <button id="btnNextError" class="stepper-btn" title="Next suggestion (Right Arrow)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+
+                <div class="stepper-actions">
+                  <button id="btnRejectAll" class="btn btn-secondary btn-sm" title="Reject all pending suggestions">Reject All</button>
+                  <button id="btnAcceptAllRemaining" class="btn btn-secondary btn-sm" title="Accept all remaining suggestions">Accept All</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Right Column: Interactive Suggestion Cards -->
-        <div class="suggestions-panel">
-          <div class="panel-header">
-            <h3>Corrections & Suggestions</h3>
-            <div class="decision-summary">
-              <span id="acceptedCountBadge" class="badge-accepted">0 Accepted</span>
-              <span id="rejectedCountBadge" class="badge-rejected">0 Rejected</span>
-              <span id="pendingCountBadge" class="badge-pending">0 Pending</span>
-            </div>
-          </div>
-
-          <div id="suggestionsList" class="suggestions-list-scroll">
-            <!-- Dynamic suggestion cards rendered here -->
+        <!-- Footer Rating Bar (Wordvice Style) -->
+        <div class="app-card-footer">
+          <span class="footer-help">Stark AI Proofreader • Enterprise Word Engine</span>
+          <div class="footer-rating">
+            <span class="rating-stars">★★★★★</span>
+            <span class="rating-score">4.9 / 5.0</span>
+            <span class="rating-count">(Enterprise Accuracy)</span>
           </div>
         </div>
       </div>
+    </main>
+  </div>
 
-      <!-- Sticky Bottom Action Footer -->
-      <div class="review-footer">
-        <div class="footer-progress">
-          <div class="progress-info">
-            <span id="progressSummary">0 of 0 reviewed</span>
-            <span id="applyCountSummary" class="text-highlight">0 corrections ready to apply</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div id="progressBar" class="progress-bar-fill" style="width: 0%;"></div>
-          </div>
-        </div>
+  <!-- LOADING OVERLAY -->
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <h3 id="loadingTitle">Checking with Gemini AI...</h3>
+      <p id="loadingMsg">Extracting text blocks and checking grammar, spelling, and phrasing...</p>
+    </div>
+  </div>
 
-        <div class="footer-actions">
-          <button id="btnApplyAndDownload" class="btn btn-success btn-lg">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            <span>Apply Corrections & Download (.docx)</span>
-          </button>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Settings / API Key Modal -->
+  <!-- SETTINGS / API KEY MODAL -->
   <div id="settingsModal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -415,7 +508,7 @@
       </div>
       <div class="modal-body">
         <p class="modal-desc">
-          DocProofreader uses Google Gemini High-Speed AI for state-of-the-art context-aware grammar, spelling, and executive phrasing checks.
+          Stark Proofreader uses Google Gemini High-Speed AI for state-of-the-art context-aware grammar, spelling, and executive phrasing checks.
         </p>
 
         <div class="form-group">
@@ -447,6 +540,37 @@
     </div>
   </div>
 
-  <script src="/static/app.js?v=stark5.2"></script>
+  <!-- RULES & SENSITIVITY MODAL -->
+  <div id="rulesModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Proofreading Modes & Rules</h2>
+        <button id="btnCloseRulesModal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="rule-mode-card">
+          <h4>Light Mode</h4>
+          <p>Catches only clear typos, double spaces, and obvious misspellings. Leaves all sentences and phrasing untouched.</p>
+        </div>
+        <div class="rule-mode-card active">
+          <h4>Standard Mode (Default)</h4>
+          <p>Automatically fixes typos and evident errors. Flags subject-verb disagreements, punctuation flaws, and passive voice.</p>
+        </div>
+        <div class="rule-mode-card">
+          <h4>Intensive Mode</h4>
+          <p>Deep executive polish. Enhances vocabulary, readability, transitions, and professional rhythm.</p>
+        </div>
+        <div class="rule-mode-card">
+          <h4>Concise Mode</h4>
+          <p>Eliminates redundancy, fluff, and filler words to deliver crisp executive summaries.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCloseRulesBtn" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=stark6.0"></script>
 </body>
 </html>

@@ -726,6 +726,15 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/'/g, '&#039;');
   }
 
+  function formatDiffContent(text, isSpacing = false) {
+    if (!text) return '';
+    const escaped = escapeHtml(text);
+    if (isSpacing && text.includes('  ')) {
+      return escaped.replace(/  +/g, match => `<span class="diff-space-pill" title="${match.length} consecutive spaces">${'·'.repeat(match.length)}</span>`);
+    }
+    return escaped;
+  }
+
   // Render Suggestions List (Right Panel)
   function renderSuggestionsList() {
     suggestionsList.innerHTML = '';
@@ -806,9 +815,9 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <div class="card-diff-box">
-        <del class="diff-del">${escapeHtml(issue.original_text)}</del>
+        <del class="diff-del">${formatDiffContent(issue.original_text, errType === 'spacing')}</del>
         <span class="diff-arrow">→</span>
-        <ins class="diff-ins" id="targetText_${issue.id}">${escapeHtml(decision.editedText)}</ins>
+        <ins class="diff-ins" id="targetText_${issue.id}">${formatDiffContent(decision.editedText, errType === 'spacing')}</ins>
       </div>
 
       <p class="card-explanation">${escapeHtml(issue.explanation)}</p>
@@ -878,7 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const val = editInput.value.trim();
       if (val) {
         decisions[issue.id].editedText = val;
-        targetText.textContent = val;
+        targetText.innerHTML = formatDiffContent(val, errType === 'spacing');
         editWrap.classList.add('hidden');
         setDecision(issue.id, true, false, true);
       }

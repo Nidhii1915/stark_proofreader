@@ -101,6 +101,10 @@ class GeminiProofreader:
                 block_text = block_info["text"]
                 is_title = block_info.get("is_title_or_heading", False)
 
+                # NO-OP RULE: Ignore identical text
+                if orig == repl:
+                    continue
+
                 # BRANDING & TITLE RULE: Ignore casing differences in Titles or Brand items
                 if is_title and orig.strip().lower() == repl.strip().lower():
                     continue
@@ -109,7 +113,28 @@ class GeminiProofreader:
                 expl_lower = (issue.get("explanation") or "").lower()
                 err_type = (issue.get("error_type") or "").lower()
 
-                if "space" in expl_lower or "double space" in expl_lower:
+                # STRICT DOUBLE SPACE VALIDATION:
+                # If an issue claims to be a double space error, orig MUST contain at least 2 consecutive spaces!
+                if "double space" in expl_lower or "multiple space" in expl_lower:
+                    if not re.search(r'[ ]{2,}', orig):
+                        # Hallucination: the text only has single spaces! Discard it.
+                        continue
+                    issue["error_type"] = "spacing"
+                    err_type = "spacing"
+                    issue["is_evident"] = True
+
+                # If orig and repl only differ by whitespace, ensure there is an actual whitespace defect
+                if orig.strip() == repl.strip():
+                    has_double_space = bool(re.search(r'[ ]{2,}', orig))
+                    has_unwanted_punct_space = bool(re.search(r'\s+[,.:;!?]', orig))
+                    has_missing_punct_space = bool(re.search(r'[,.:;!?][a-zA-Z]', orig))
+                    if not (has_double_space or has_unwanted_punct_space or has_missing_punct_space):
+                        # Text only differs by non-existent or irrelevant whitespace hallucination
+                        continue
+                    issue["error_type"] = "spacing"
+                    err_type = "spacing"
+                    issue["is_evident"] = True
+                elif any(k in expl_lower for k in ["missing space after", "space before punctuation"]):
                     issue["error_type"] = "spacing"
                     err_type = "spacing"
                     issue["is_evident"] = True
@@ -157,17 +182,17 @@ class GeminiProofreader:
 Detect errors and output structured JSON:
 1. Spelling typos (type: 'spelling', severity: 'error', is_evident: true).
 2. Obvious grammatical errors (type: 'grammar', severity: 'error', is_evident: true).
-3. Spacing and punctuation errors (type: 'spacing' or 'punctuation', severity: 'error', is_evident: true).
+3. Punctuation errors (type: 'punctuation', severity: 'error', is_evident: true).
 4. Style/clarity flaws (type: 'clarity' or 'style', is_evident: false).
 
 Tone guidance: {tone_instructions}
 
 CRITICAL RULES:
-- SPACING RULES: Flag redundant double spaces ('  '), missing space after punctuation ('word,word' -> 'word, word', 'sentence.Next' -> 'sentence. Next'), and unwanted space before punctuation ('word ,' -> 'word,'). Set type: 'spacing', severity: 'error', is_evident: true.
-- SPEED REQUIREMENT: Keep `explanation` ULTRA-CONCISE (5 to 8 words maximum, e.g. 'Subject-verb agreement: use are' or 'Remove redundant double space').
+- DO NOT flag double spaces or spacing between words (whitespace is handled deterministically by our native engine). Focus purely on spelling, grammar, syntax, phrasing, and clarity.
+- SPEED REQUIREMENT: Keep `explanation` ULTRA-CONCISE (5 to 8 words maximum, e.g. 'Subject-verb agreement: use are' or 'Typo: correct to infrastructure').
 - TITLE & BRANDING RULE: For any block marked [TITLE/HEADING] or sections labeled 'Title:' or item brand names, DO NOT change or flag letter casing (capital vs small letters). Keep Title capitalization exactly as written.
 - `original_text` MUST be an EXACT verbatim substring from the block.
-- `suggested_text` MUST directly replace `original_text`.
+- `suggested_text` MUST directly replace `original_text` and MUST NOT be identical to `original_text`.
 - If no errors, output empty issues list.
 """
 
@@ -206,23 +231,32 @@ CRITICAL RULES:
                 continue
 
             # 1. Multiple spaces (2 or more spaces between words)
-            for m in re.finditer(r'([^\s]+)[ ]{2,}([^\s]+)', b_text):
-                orig = m.group(0)
-                repl = f"{m.group(1)} {m.group(2)}"
-                key = (b_id, orig.strip())
-                if key not in existing_keys:
-                    all_issues.append({
-                        "block_id": b_id,
-                        "original_text": orig,
-                        "suggested_text": repl,
-                        "error_type": "spacing",
-                        "explanation": "Remove redundant double space",
-                        "severity": "error",
-                        "is_evident": True,
-                        "char_start": m.start(),
-                        "char_end": m.end()
-                    })
-                    existing_keys.add(key)
+            for m in re.finditer(r'(?<=\S)[ ]{2,}(?=\S)', b_text):
+                s, e = m.start(), m.end()
+                w_start = b_text.rfind(' ', 0, s)
+                w_start = 0 if w_start == -1 else w_start + 1
+                w_end = b_text.find(' ', e)
+                w_end = len(b_text) if w_end == -1 else w_end
+
+                orig = b_text[w_start:w_end]
+                repl = b_text[w_start:s] + ' ' + b_text[e:w_end]
+
+                # Strict check: orig MUST contain at least 2 consecutive spaces and orig != repl
+                if re.search(r'[ ]{2,}', orig) and orig != repl:
+                    key = (b_id, orig.strip())
+                    if key not in existing_keys:
+                        all_issues.append({
+                            "block_id": b_id,
+                            "original_text": orig,
+                            "suggested_text": repl,
+                            "error_type": "spacing",
+                            "explanation": "Remove redundant double space",
+                            "severity": "error",
+                            "is_evident": True,
+                            "char_start": w_start,
+                            "char_end": w_end
+                        })
+                        existing_keys.add(key)
 
             # 2. Missing space after comma, colon, semicolon
             for m in re.finditer(r'([a-zA-Z0-9]),([a-zA-Z])', b_text):

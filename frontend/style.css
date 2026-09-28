@@ -738,6 +738,7 @@ body.theme-dark .smart-banner {
   font-size: 1.02rem;
   line-height: 1.85;
   color: #222222;
+  white-space: pre-wrap;
 }
 
 body.theme-dark .doc-content-scroll {
@@ -745,8 +746,10 @@ body.theme-dark .doc-content-scroll {
   color: #E2E8F0;
 }
 
+.doc-paragraph,
 .doc-p {
   margin-bottom: 1.25rem;
+  white-space: pre-wrap;
 }
 
 .doc-heading-0 {
@@ -1036,14 +1039,17 @@ body.theme-dark .doc-content-scroll {
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .diff-del {
   color: #DC2626;
   text-decoration: line-through;
   background-color: rgba(220, 38, 38, 0.08);
-  padding: 0.1rem 0.35rem;
+  padding: 0.15rem 0.45rem;
   border-radius: 4px;
+  white-space: pre-wrap;
 }
 
 .diff-arrow {
@@ -1056,8 +1062,24 @@ body.theme-dark .doc-content-scroll {
   text-decoration: none;
   font-weight: 600;
   background-color: rgba(5, 150, 105, 0.08);
-  padding: 0.1rem 0.35rem;
+  padding: 0.15rem 0.45rem;
   border-radius: 4px;
+  white-space: pre-wrap;
+}
+
+.diff-space-pill {
+  display: inline-block;
+  background-color: rgba(180, 148, 76, 0.22);
+  color: var(--stark-gold-text);
+  border: 1px dashed var(--stark-gold);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  font-weight: 700;
+  letter-spacing: 2px;
+  line-height: 1.2;
+  margin: 0 2px;
 }
 
 .card-explanation {

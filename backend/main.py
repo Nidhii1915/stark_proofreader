@@ -5,7 +5,9 @@ import json
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from dotenv import load_dotenv
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+import hmac
+import hashlib
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -96,7 +98,85 @@ async def serve_index():
         return HTMLResponse(content=index_file.read_text(encoding="utf-8"))
     return HTMLResponse("<h1>Frontend not found</h1>", status_code=404)
 
-@app.get("/api/config")
+# =========================================================================
+# Team Passcode Security & Authentication
+# =========================================================================
+TEAM_PASSCODE = os.getenv("TEAM_PASSCODE", "stark2026").strip()
+SECRET_AUTH_KEY = os.getenv("SECRET_AUTH_KEY", "stark-secret-salt-proofreader-2026").strip()
+
+def get_expected_token() -> str:
+    """Computes a cryptographically secure token derived from passcode + secret salt."""
+    return hmac.new(
+        SECRET_AUTH_KEY.encode("utf-8"),
+        TEAM_PASSCODE.encode("utf-8"),
+        hashlib.sha256
+    ).hexdigest()
+
+def is_valid_token(token: Optional[str]) -> bool:
+    """Verifies token against expected hash using constant-time comparison."""
+    if not token or not isinstance(token, str):
+        return False
+    return hmac.compare_digest(token.strip(), get_expected_token())
+
+def is_valid_passcode(passcode: Optional[str]) -> bool:
+    """Verifies passcode against configured TEAM_PASSCODE using constant-time comparison."""
+    if not passcode or not isinstance(passcode, str):
+        return False
+    return hmac.compare_digest(passcode.strip(), TEAM_PASSCODE)
+
+async def require_team_auth(
+    authorization: Optional[str] = Header(None),
+    x_stark_token: Optional[str] = Header(None)
+):
+    """FastAPI dependency to protect endpoints with team authentication."""
+    token = None
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+    elif x_stark_token:
+        token = x_stark_token.strip()
+
+    if not is_valid_token(token):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required or session expired. Please enter the team passcode."
+        )
+    return True
+
+class LoginRequest(BaseModel):
+    passcode: str
+
+@app.get("/api/auth/status")
+async def get_auth_status(
+    authorization: Optional[str] = Header(None),
+    x_stark_token: Optional[str] = Header(None)
+):
+    """Checks whether the client has an active authenticated session."""
+    token = None
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+    elif x_stark_token:
+        token = x_stark_token.strip()
+
+    return {
+        "auth_required": True,
+        "authenticated": is_valid_token(token)
+    }
+
+@app.post("/api/auth/login")
+async def auth_login(req: LoginRequest):
+    """Validates the team passcode and issues a secure session token."""
+    if is_valid_passcode(req.passcode):
+        return {
+            "success": True,
+            "token": get_expected_token(),
+            "message": "Access granted to Stark Proofreader."
+        }
+    raise HTTPException(
+        status_code=401,
+        detail="Incorrect team passcode. Please try again or check with your team lead."
+    )
+
+@app.get("/api/config", dependencies=[Depends(require_team_auth)])
 async def get_config():
     raw = os.getenv("GEMINI_API_KEY", "").strip().strip("'\"")
     has_key = bool(raw and len(raw) > 20 and raw != "GEMINI_API_KEY" and not raw.startswith("your_"))
@@ -108,7 +188,7 @@ async def get_config():
 class KeyTestRequest(BaseModel):
     api_key: str
 
-@app.post("/api/test-key")
+@app.post("/api/test-key", dependencies=[Depends(require_team_auth)])
 async def test_api_key(req: KeyTestRequest):
     """Tests if a provided Gemini API key is valid."""
     key = req.api_key.strip()
@@ -135,7 +215,7 @@ async def test_api_key(req: KeyTestRequest):
     except Exception as e:
         return {"valid": False, "error": str(e)}
 
-@app.post("/api/analyze")
+@app.post("/api/analyze", dependencies=[Depends(require_team_auth)])
 async def analyze_document(
     file: UploadFile = File(...),
     api_key: Optional[str] = Form(None),
@@ -202,7 +282,7 @@ class ApplyRequest(BaseModel):
     session_id: str
     decisions: List[DecisionItem]
 
-@app.post("/api/apply")
+@app.post("/api/apply", dependencies=[Depends(require_team_auth)])
 async def apply_corrections(req: ApplyRequest):
     """
     Applies confirmed corrections to the original Word document
@@ -237,7 +317,7 @@ async def apply_corrections(req: ApplyRequest):
         }
     )
 
-@app.get("/api/sample-doc")
+@app.get("/api/sample-doc", dependencies=[Depends(require_team_auth)])
 async def get_sample_document():
     """Generates and returns a sample .docx document containing typical business report mistakes."""
     doc = Document()

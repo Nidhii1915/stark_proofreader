@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let serverHasKey = false;
 
   // DOM Elements - Navigation & Theme
+  const authStatusBadge = document.getElementById('authStatusBadge');
+  const btnLockSession = document.getElementById('btnLockSession');
   const apiKeyStatus = document.getElementById('apiKeyStatus');
   const btnSettings = document.getElementById('btnSettings');
   const themeToggle = document.getElementById('themeToggle');
@@ -25,6 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const keyTestResult = document.getElementById('keyTestResult');
 
   // DOM Elements - Views
+  const loginSection = document.getElementById('loginSection');
+  const loginForm = document.getElementById('loginForm');
+  const inputPasscode = document.getElementById('inputPasscode');
+  const btnTogglePasscodeVis = document.getElementById('btnTogglePasscodeVis');
+  const passcodeEyeIcon = document.getElementById('passcodeEyeIcon');
+  const btnUnlock = document.getElementById('btnUnlock');
+  const loginFeedback = document.getElementById('loginFeedback');
   const uploadSection = document.getElementById('uploadSection');
   const reviewSection = document.getElementById('reviewSection');
   const loadingOverlay = document.getElementById('loadingOverlay');
@@ -69,7 +78,179 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnApplyAndDownload = document.getElementById('btnApplyAndDownload');
 
   // =========================================================================
-  // Initialization & Settings
+  // Authentication & Session Management
+  // =========================================================================
+
+  function getAuthToken() {
+    return localStorage.getItem('stark_auth_token') || '';
+  }
+
+  function setAuthToken(token) {
+    if (token) {
+      localStorage.setItem('stark_auth_token', token);
+    } else {
+      localStorage.removeItem('stark_auth_token');
+    }
+  }
+
+  function clearAuthToken() {
+    localStorage.removeItem('stark_auth_token');
+  }
+
+  function getAuthHeaders(extraHeaders = {}) {
+    const headers = { ...extraHeaders };
+    const token = getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  }
+
+  async function authFetch(url, options = {}) {
+    const headers = getAuthHeaders(options.headers || {});
+    const resp = await fetch(url, { ...options, headers });
+    if (resp.status === 401) {
+      clearAuthToken();
+      showLoginView('Your session has expired or requires authentication. Please enter your team passcode.');
+      throw new Error('Authentication required');
+    }
+    return resp;
+  }
+
+  function showLoginView(feedbackMsg = null) {
+    loginSection.classList.add('active');
+    uploadSection.classList.remove('active');
+    reviewSection.classList.remove('active');
+    authStatusBadge.classList.add('hidden');
+    btnLockSession.classList.add('hidden');
+    apiKeyStatus.classList.add('hidden');
+    btnSettings.classList.add('hidden');
+    
+    if (feedbackMsg) {
+      showLoginFeedback(feedbackMsg, false);
+    } else {
+      loginFeedback.classList.add('hidden');
+    }
+    inputPasscode.value = '';
+    setTimeout(() => inputPasscode.focus(), 100);
+  }
+
+  function showWorkspaceView() {
+    loginSection.classList.remove('active');
+    uploadSection.classList.add('active');
+    reviewSection.classList.remove('active');
+    authStatusBadge.classList.remove('hidden');
+    btnLockSession.classList.remove('hidden');
+    apiKeyStatus.classList.remove('hidden');
+    btnSettings.classList.remove('hidden');
+
+    // Load server configuration once authenticated
+    fetchConfig();
+  }
+
+  function showLoginFeedback(msg, isSuccess) {
+    loginFeedback.textContent = msg;
+    loginFeedback.className = `login-feedback ${isSuccess ? 'success' : 'error'}`;
+    loginFeedback.classList.remove('hidden');
+  }
+
+  // Passcode visibility toggle
+  btnTogglePasscodeVis.addEventListener('click', () => {
+    const isPassword = inputPasscode.type === 'password';
+    inputPasscode.type = isPassword ? 'text' : 'password';
+    passcodeEyeIcon.innerHTML = isPassword
+      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
+      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+  });
+
+  // Login submission
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await handleLogin();
+  });
+
+  async function handleLogin() {
+    const passcode = inputPasscode.value.trim();
+    if (!passcode) {
+      showLoginFeedback('Please enter the team passcode.', false);
+      inputPasscode.focus();
+      return;
+    }
+
+    btnUnlock.disabled = true;
+    const origBtnHtml = btnUnlock.innerHTML;
+    btnUnlock.innerHTML = '<span>Verifying Passcode...</span>';
+
+    try {
+      const resp = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode })
+      });
+
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({ detail: 'Incorrect passcode' }));
+        showLoginFeedback(errorData.detail || 'Incorrect team passcode. Please try again.', false);
+        inputPasscode.select();
+        btnUnlock.disabled = false;
+        btnUnlock.innerHTML = origBtnHtml;
+        return;
+      }
+
+      const data = await resp.json();
+      setAuthToken(data.token);
+      showLoginFeedback('Passcode verified! Unlocking workspace...', true);
+
+      setTimeout(() => {
+        btnUnlock.disabled = false;
+        btnUnlock.innerHTML = origBtnHtml;
+        showWorkspaceView();
+      }, 350);
+
+    } catch (err) {
+      showLoginFeedback('Network error verifying passcode. Please try again.', false);
+      btnUnlock.disabled = false;
+      btnUnlock.innerHTML = origBtnHtml;
+    }
+  }
+
+  // Lock workspace / Logout button
+  btnLockSession.addEventListener('click', () => {
+    if (confirm('Lock the Stark Proofreader workspace? You will need to re-enter the team passcode.')) {
+      clearAuthToken();
+      showLoginView('Workspace locked. Enter passcode to return.');
+    }
+  });
+
+  // Check initial authentication status
+  checkAuthStatus();
+
+  async function checkAuthStatus() {
+    const token = getAuthToken();
+    if (!token) {
+      showLoginView();
+      return;
+    }
+
+    try {
+      const resp = await fetch('/api/auth/status', {
+        headers: getAuthHeaders()
+      });
+      const data = await resp.json();
+      if (data.authenticated) {
+        showWorkspaceView();
+      } else {
+        clearAuthToken();
+        showLoginView();
+      }
+    } catch (err) {
+      // Offline fallback: show login
+      showLoginView();
+    }
+  }
+
+  // =========================================================================
+  // Settings & Configuration
   // =========================================================================
 
   // Load saved API key from localStorage
@@ -78,12 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
     inputApiKey.value = savedKey;
   }
 
-  // Check server configuration
-  fetchConfig();
-
   async function fetchConfig() {
     try {
-      const resp = await fetch('/api/config');
+      const resp = await authFetch('/api/config');
       const data = await resp.json();
       serverHasKey = data.has_server_key;
       updateKeyBadge();
@@ -138,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnTestKey.disabled = true;
     btnTestKey.textContent = 'Testing...';
     try {
-      const resp = await fetch('/api/test-key', {
+      const resp = await authFetch('/api/test-key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ api_key: key })
@@ -234,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnLoadSample.addEventListener('click', async () => {
     showLoading('Loading Sample Document...', 'Fetching pre-configured business report sample...');
     try {
-      const resp = await fetch('/api/sample-doc');
+      const resp = await authFetch('/api/sample-doc');
       if (!resp.ok) throw new Error('Could not load sample document');
       const blob = await resp.blob();
       const sampleFile = new File([blob], 'Sample_Business_Report.docx', {
@@ -283,7 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('tone', toneSelect.value);
 
     try {
-      const resp = await fetch('/api/analyze', {
+      const resp = await authFetch('/api/analyze', {
         method: 'POST',
         body: formData
       });
@@ -895,7 +1073,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showLoading('Applying Corrections & Building Document...', 'Updating Word runs, preserving formatting, and generating your clean .docx file...');
 
     try {
-      const resp = await fetch('/api/apply', {
+      const resp = await authFetch('/api/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

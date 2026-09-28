@@ -9,3 +9,7 @@ services:
         value: 3.11.9
       - key: GEMINI_API_KEY
         sync: false
+      - key: TEAM_PASSCODE
+        value: stark2026
+      - key: SECRET_AUTH_KEY
+        value: stark-secret-salt-proofreader-2026

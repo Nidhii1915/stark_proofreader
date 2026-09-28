@@ -31,6 +31,7 @@ class DocxProcessor:
         for p_idx, p in enumerate(doc.paragraphs):
             text = p.text.strip()
             if text:
+                style_name = p.style.name if p.style else "Normal"
                 style_lower = style_name.lower()
                 text_lower = text.lower()
                 is_title = bool(
@@ -65,6 +66,7 @@ class DocxProcessor:
                     for cp_idx, p in enumerate(cell.paragraphs):
                         text = p.text.strip()
                         if text:
+                            style_name = p.style.name if p.style else "Normal"
                             style_lower = style_name.lower()
                             text_lower = text.lower()
                             is_title = bool(

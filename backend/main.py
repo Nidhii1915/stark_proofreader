@@ -163,6 +163,7 @@ async def get_auth_status(
     }
 
 @app.post("/api/auth/login")
+@app.post("/api/verify-passcode")
 async def auth_login(req: LoginRequest):
     """Validates the team passcode and issues a secure session token."""
     if is_valid_passcode(req.passcode):

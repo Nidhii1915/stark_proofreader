@@ -739,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         const issueId = span.getAttribute('data-issue-id');
         const issue = docIssues.find(i => i.id === issueId);
-        activateIssue(issueId, issue ? issue.block_id : null, true);
+        activateIssue(issueId, issue ? issue.block_id : null, true, 'doc');
       });
     });
   }
@@ -752,11 +752,24 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastIdx = 0;
 
     for (const issue of sorted) {
-      const start = issue.char_start;
-      const end = issue.char_end;
+      let start = issue.char_start;
+      let end = issue.char_end;
 
       if (start === undefined || end === undefined || start < lastIdx || end > text.length) {
-        continue;
+        // Robust fallback: search for original_text starting from lastIdx
+        const orig = issue.original_text || '';
+        if (!orig) continue;
+        let found = text.indexOf(orig, lastIdx);
+        if (found === -1) {
+          // Case-insensitive search
+          found = text.toLowerCase().indexOf(orig.toLowerCase(), lastIdx);
+        }
+        if (found !== -1) {
+          start = found;
+          end = found + orig.length;
+        } else {
+          continue;
+        }
       }
 
       // Plain text before issue
@@ -955,7 +968,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clicking anywhere on the suggestion card navigates directly to that part of the document!
     card.addEventListener('click', (e) => {
       if (e.target.closest('button') || e.target.closest('input')) return;
-      activateIssue(issue.id, issue.block_id, true);
+      activateIssue(issue.id, issue.block_id, true, 'card');
     });
 
     // Hover on card focuses corresponding paragraph highlight
@@ -1059,38 +1072,93 @@ document.addEventListener('DOMContentLoaded', () => {
     if (popoverBtnNext) popoverBtnNext.disabled = disabled;
   }
 
-  function activateIssue(issueId, blockId, showPopover = true) {
+  function scrollTargetInsideContainer(container, targetEl, options = {}) {
+    if (!container || !targetEl) return;
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = targetEl.getBoundingClientRect();
+
+    // Check if target is already reasonably visible inside the container
+    const isAlreadyVisible = (
+      targetRect.top >= containerRect.top + 30 &&
+      targetRect.bottom <= containerRect.bottom - 30
+    );
+    if (isAlreadyVisible && !options.force) {
+      return;
+    }
+
+    const relativeTop = targetRect.top - containerRect.top;
+    const targetScrollTop = container.scrollTop + relativeTop - (container.clientHeight / 2) + (targetRect.height / 2);
+
+    container.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: options.behavior || 'smooth'
+    });
+  }
+
+  let popoverTrackingAnim = null;
+  function startPopoverTracking(durationMs = 500) {
+    if (popoverTrackingAnim) cancelAnimationFrame(popoverTrackingAnim);
+    const start = performance.now();
+    function track(now) {
+      if (currentActiveIssueId && inlinePopover && !inlinePopover.classList.contains('hidden')) {
+        updatePopoverPosition(true);
+        if (now - start < durationMs) {
+          popoverTrackingAnim = requestAnimationFrame(track);
+        } else {
+          popoverTrackingAnim = null;
+        }
+      }
+    }
+    popoverTrackingAnim = requestAnimationFrame(track);
+  }
+
+  function activateIssue(issueId, blockId, showPopover = true, source = 'nav') {
     if (!issueId) return;
     currentActiveIssueId = issueId;
 
     const targetIssue = docIssues.find(i => i.id === issueId);
 
-    // 1. Dual-Scroll Document: Focus & smoothly center the highlighted text
+    // 1. Remove pulse and focus from all previous elements
     docViewer.querySelectorAll('.pulse-target').forEach(el => el.classList.remove('pulse-target', 'focused'));
-    const span = docViewer.querySelector(`.inline-error-highlight[data-issue-id="${issueId}"]`);
-    if (span) {
-      span.classList.add('focused', 'pulse-target');
-      span.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else if (blockId) {
-      const p = document.getElementById(`view_${blockId}`);
+    document.querySelectorAll('.suggestion-card').forEach(c => c.classList.remove('focused'));
+
+    // 2. Locate highlight span in document preview with robust fallback
+    let span = docViewer.querySelector(`.inline-error-highlight[data-issue-id="${issueId}"]`);
+    if (!span && targetIssue) {
+      const bId = targetIssue.block_id || blockId;
+      const p = bId ? document.getElementById(`view_${bId}`) : null;
       if (p) {
-        p.classList.add('focused', 'pulse-target');
-        p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const origNorm = (targetIssue.original_text || '').trim().toLowerCase();
+        const spansInBlock = p.querySelectorAll('.inline-error-highlight');
+        for (const s of spansInBlock) {
+          if (s.textContent.trim().toLowerCase() === origNorm) {
+            span = s;
+            break;
+          }
+        }
       }
     }
 
-    // 2. Dual-Scroll Suggestion Cards: Focus & smoothly center the matching card
-    document.querySelectorAll('.suggestion-card').forEach(c => c.classList.remove('focused'));
+    const docTarget = span || (blockId ? document.getElementById(`view_${blockId}`) : null);
+    if (docTarget) {
+      docTarget.classList.add('focused', 'pulse-target');
+      // Scroll document smoothly to center the error.
+      // If user clicked the document span itself, don't force a jump; otherwise force center-scroll
+      scrollTargetInsideContainer(docViewer, docTarget, { force: source !== 'doc' });
+    }
+
+    // 3. Focus & smoothly scroll matching card in suggestions list
     const activeCard = document.getElementById(`card_${issueId}`);
     if (activeCard) {
       activeCard.classList.add('focused');
-      activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // If user clicked the card itself, don't force a jump; otherwise force center-scroll
+      scrollTargetInsideContainer(suggestionsList, activeCard, { force: source !== 'card' });
     }
 
-    // 3. Update Stepper Status Badge
+    // 4. Update Stepper Status Badge
     updateStepperCounter();
 
-    // 4. In-Context Popover ("see it and correct it right there itself")
+    // 5. In-Context Popover ("see it and correct it right there itself")
     if (showPopover && span && targetIssue && inlinePopover) {
       const errType = (targetIssue.error_type || 'grammar').toLowerCase();
       const typeLabel = errType.charAt(0).toUpperCase() + errType.slice(1);
@@ -1118,18 +1186,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Display and position popover
       inlinePopover.classList.remove('hidden');
-      updatePopoverPosition();
+      updatePopoverPosition(true);
 
-      // Recalculate positioning as smooth scrolling animates
-      setTimeout(updatePopoverPosition, 100);
-      setTimeout(updatePopoverPosition, 250);
-      setTimeout(updatePopoverPosition, 450);
+      // Track popover position continuously during smooth scrolling
+      startPopoverTracking(500);
     } else if (inlinePopover && (!showPopover || !span)) {
       inlinePopover.classList.add('hidden');
     }
   }
 
-  function updatePopoverPosition() {
+  function updatePopoverPosition(force = false) {
     if (!currentActiveIssueId || !inlinePopover || inlinePopover.classList.contains('hidden')) return;
 
     const span = docViewer.querySelector(`.inline-error-highlight[data-issue-id="${currentActiveIssueId}"]`);
@@ -1145,10 +1211,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const spanRect = span.getBoundingClientRect();
     const docViewerRect = docViewer.getBoundingClientRect();
 
-    // Check if span is scrolled out of viewable docViewer frame
-    if (spanRect.bottom < docViewerRect.top - 20 || spanRect.top > docViewerRect.bottom + 20) {
-      inlinePopover.classList.add('hidden');
-      return;
+    // When not in force mode (e.g. user manual scroll), hide if span is far outside
+    if (!force) {
+      if (spanRect.bottom < docViewerRect.top - 80 || spanRect.top > docViewerRect.bottom + 80) {
+        inlinePopover.classList.add('hidden');
+        return;
+      }
     }
 
     const popoverWidth = inlinePopover.offsetWidth || 360;
@@ -1299,6 +1367,17 @@ document.addEventListener('DOMContentLoaded', () => {
     btnNextError.addEventListener('click', (e) => {
       e.stopPropagation();
       nextIssue(false);
+    });
+  }
+
+  // Header click handler: Clicking "Corrections & Suggestions" navigates to next pending issue
+  const suggPanelHeader = document.querySelector('.suggestions-panel .panel-header');
+  if (suggPanelHeader) {
+    suggPanelHeader.style.cursor = 'pointer';
+    suggPanelHeader.title = 'Click to focus next pending suggestion';
+    suggPanelHeader.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      nextIssue(true);
     });
   }
 

@@ -551,12 +551,18 @@ body.theme-dark .navbar {
 
 #reviewSection {
   flex: 1;
-  display: none;
+  display: none !important;
   flex-direction: column;
   background-color: var(--bg-canvas);
+  height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
+  overflow: hidden;
 }
 #reviewSection.active {
-  display: flex;
+  display: flex !important;
+  height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
+  overflow: hidden;
 }
 
 /* Review Toolbar */

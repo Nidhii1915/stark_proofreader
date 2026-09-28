@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bannerPendingText = document.getElementById('bannerPendingText');
   const btnViewPendingOnly = document.getElementById('btnViewPendingOnly');
   const btnAcceptAllRemaining = document.getElementById('btnAcceptAllRemaining');
+  const btnCloseBanner = document.getElementById('btnCloseBanner');
   const btnAcceptAll = document.getElementById('btnAcceptAll');
   const btnRejectAll = document.getElementById('btnRejectAll');
   const docViewer = document.getElementById('docViewer');
@@ -645,6 +646,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (btnCloseBanner) {
+    btnCloseBanner.addEventListener('click', () => {
+      if (autoAcceptBanner) {
+        autoAcceptBanner.style.display = 'none';
+      }
+    });
+  }
+
   function updateFilterCounts() {
     let pendingCount = 0;
     let autoAcceptedCount = 0;
@@ -672,9 +681,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (pendingCount > 0) {
         bannerPendingText.textContent = `${pendingCount} suggestion${pendingCount === 1 ? '' : 's'} need your confirmation.`;
         if (btnViewPendingOnly) btnViewPendingOnly.style.display = 'inline-flex';
+        if (btnAcceptAllRemaining) btnAcceptAllRemaining.style.display = 'inline-flex';
       } else {
         bannerPendingText.textContent = `All suggestions confirmed! Ready to download your clean file.`;
         if (btnViewPendingOnly) btnViewPendingOnly.style.display = 'none';
+        if (btnAcceptAllRemaining) btnAcceptAllRemaining.style.display = 'none';
       }
     }
   }
@@ -878,8 +889,8 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="card-header-row">
         <div class="card-badges">
           <span class="type-badge badge-${errType}">${typeLabel}</span>
-          <span class="card-severity" style="font-size:0.75rem; color:var(--text-muted); text-transform:capitalize;">${issue.severity || 'suggestion'}</span>
-          ${repeatCount > 1 ? `<span class="badge-repeated" title="Occurs ${repeatCount} times in document. Updating here syncs all occurrences!">🔁 ${repeatCount}x in doc (auto-synced)</span>` : ''}
+          ${issue.severity && issue.severity !== 'suggestion' ? `<span class="card-severity badge-severity-${issue.severity.toLowerCase()}">${issue.severity}</span>` : ''}
+          ${repeatCount > 1 ? `<span class="badge-repeated" title="Occurs ${repeatCount} times in document (auto-synced)">🔁 ${repeatCount}x</span>` : ''}
         </div>
         <div class="card-status-container" id="statusContainer_${issue.id}">
           ${statusBadgeHtml}

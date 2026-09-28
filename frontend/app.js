@@ -678,16 +678,22 @@ document.addEventListener('DOMContentLoaded', () => {
       docBlocks = result.blocks || [];
       docIssues = result.issues || [];
 
-      // Initialize decisions: auto-accept typos & evident grammar
+      // Initialize decisions: auto-accept evident typos ONLY in body text (NEVER in titles or catalog metadata!)
       decisions = {};
       let autoCount = 0;
       let reviewCount = 0;
 
+      const blockMap = {};
+      docBlocks.forEach(b => { blockMap[b.id] = b; });
+
       docIssues.forEach(issue => {
+        const blk = blockMap[issue.block_id];
+        const isTitle = (blk && blk.is_title_or_heading) || issue.is_title;
         const errType = (issue.error_type || '').toLowerCase();
         const isSpelling = errType === 'spelling';
         const isSpacing = errType === 'spacing';
-        const isEvident = isSpelling || isSpacing || issue.is_evident === true || (errType === 'grammar' && issue.severity === 'error');
+        // Titles & catalog metadata lines are strictly protected from auto-accept
+        const isEvident = !isTitle && (isSpelling || isSpacing || issue.is_evident === true || (errType === 'grammar' && issue.severity === 'error'));
 
         if (isEvident) {
           autoCount++;

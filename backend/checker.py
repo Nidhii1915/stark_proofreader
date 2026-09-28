@@ -145,6 +145,10 @@ class GeminiProofreader:
                 else:
                     issue["is_evident"] = False
 
+                if is_title:
+                    issue["is_title"] = True
+                    issue["is_evident"] = False  # Titles and metadata are NEVER auto-accepted without human confirmation!
+
                 # Direct match
                 if orig in block_text:
                     char_start = block_text.find(orig)

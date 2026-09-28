@@ -31,13 +31,23 @@ class DocxProcessor:
         for p_idx, p in enumerate(doc.paragraphs):
             text = p.text.strip()
             if text:
-                style_name = p.style.name if p.style else "Normal"
+                style_lower = style_name.lower()
+                text_lower = text.lower()
                 is_title = bool(
-                    "title" in style_name.lower() or 
-                    "heading" in style_name.lower() or 
-                    text.lower().startswith("title:") or
-                    text.lower().startswith("title -") or
-                    text.lower().startswith("title")
+                    "title" in style_lower or 
+                    "heading" in style_lower or 
+                    text_lower.startswith("title:") or
+                    text_lower.startswith("title -") or
+                    text_lower.startswith("title ") or
+                    text_lower.startswith("brand:") or
+                    text_lower.startswith("model #:") or
+                    text_lower.startswith("model:") or
+                    text_lower.startswith("upc:") or
+                    text_lower.startswith("sku:") or
+                    text_lower.startswith("item dims:") or
+                    text_lower.startswith("msrp:") or
+                    text_lower.startswith("net price:") or
+                    text_lower.startswith("freight:")
                 )
                 blocks.append({
                     "id": f"p_{p_idx}",
@@ -55,11 +65,13 @@ class DocxProcessor:
                     for cp_idx, p in enumerate(cell.paragraphs):
                         text = p.text.strip()
                         if text:
-                            style_name = p.style.name if p.style else "Normal"
+                            style_lower = style_name.lower()
+                            text_lower = text.lower()
                             is_title = bool(
-                                "title" in style_name.lower() or 
-                                "heading" in style_name.lower() or 
-                                text.lower().startswith("title:") or
+                                "title" in style_lower or 
+                                "heading" in style_lower or 
+                                text_lower.startswith("title:") or
+                                text_lower.startswith("brand:") or
                                 (r_idx == 0 and len(table.rows) > 1) # header row
                             )
                             blocks.append({

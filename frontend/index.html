@@ -273,8 +273,24 @@
           <button class="chip" data-filter="clarity">Style & Clarity <span id="countClarity" class="chip-count">0</span></button>
         </div>
 
-        <!-- Bulk Review Actions -->
+        <!-- Bulk Review Actions & Stepper -->
         <div class="toolbar-bulk-actions">
+          <div class="stepper-nav">
+            <button id="btnPrevError" class="btn btn-secondary btn-sm" title="Previous error (Keyboard: Left / Up Arrow)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              <span>Prev</span>
+            </button>
+            <span id="errorCounterBadge" class="stepper-counter">0 / 0</span>
+            <button id="btnNextError" class="btn btn-secondary btn-sm" title="Next error (Keyboard: Right / Down Arrow)">
+              <span>Next</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+
           <button id="btnAcceptAll" class="btn btn-outline-success btn-sm">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="20 6 9 17 4 12"></polyline>
@@ -310,10 +326,39 @@
         <div class="doc-view-panel">
           <div class="panel-header">
             <h3>Document Preview</h3>
-            <span class="panel-hint">Click on any highlighted issue to view its correction</span>
+            <span class="panel-hint">Click any highlight to inspect and correct it right here</span>
           </div>
           <div id="docViewer" class="doc-content-scroll">
             <!-- Dynamic document paragraphs rendered here -->
+          </div>
+
+          <!-- In-Context Correction Popover ("Correct it right there itself") -->
+          <div id="inlinePopover" class="inline-popover hidden">
+            <div class="popover-arrow"></div>
+            <div class="popover-inner">
+              <div class="popover-header-row">
+                <span id="popoverBadge" class="type-badge badge-spelling">Spelling</span>
+                <span id="popoverSeverity" class="popover-severity">Error</span>
+                <button id="btnClosePopover" class="btn-popover-close" title="Close popover">&times;</button>
+              </div>
+              <p id="popoverExplanation" class="popover-explanation">Explanation</p>
+              <div class="popover-diff-box">
+                <del id="popoverOrig" class="diff-del"></del>
+                <span class="diff-arrow">→</span>
+                <ins id="popoverRepl" class="diff-ins"></ins>
+              </div>
+              <div class="popover-actions-row">
+                <div class="popover-nav-buttons">
+                  <button id="popoverBtnPrev" class="btn btn-secondary btn-xs" title="Previous error">◀</button>
+                  <span id="popoverIndexText" class="popover-counter">1 / 5</span>
+                  <button id="popoverBtnNext" class="btn btn-secondary btn-xs" title="Next error">▶</button>
+                </div>
+                <div class="popover-decision-buttons">
+                  <button id="popoverBtnReject" class="btn btn-outline-danger btn-sm">✗ Reject</button>
+                  <button id="popoverBtnAccept" class="btn btn-success btn-sm">✓ Accept</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

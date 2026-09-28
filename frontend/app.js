@@ -77,6 +77,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const progressBar = document.getElementById('progressBar');
   const btnApplyAndDownload = document.getElementById('btnApplyAndDownload');
 
+  // DOM Elements - Stepper Navigation & In-Context Popover
+  const btnPrevError = document.getElementById('btnPrevError');
+  const btnNextError = document.getElementById('btnNextError');
+  const errorCounterBadge = document.getElementById('errorCounterBadge');
+  const inlinePopover = document.getElementById('inlinePopover');
+  const popoverBadge = document.getElementById('popoverBadge');
+  const popoverSeverity = document.getElementById('popoverSeverity');
+  const btnClosePopover = document.getElementById('btnClosePopover');
+  const popoverExplanation = document.getElementById('popoverExplanation');
+  const popoverOrig = document.getElementById('popoverOrig');
+  const popoverRepl = document.getElementById('popoverRepl');
+  const popoverBtnPrev = document.getElementById('popoverBtnPrev');
+  const popoverIndexText = document.getElementById('popoverIndexText');
+  const popoverBtnNext = document.getElementById('popoverBtnNext');
+  const popoverBtnReject = document.getElementById('popoverBtnReject');
+  const popoverBtnAccept = document.getElementById('popoverBtnAccept');
+  let currentActiveIssueId = null;
+
   // =========================================================================
   // Authentication & Session Management
   // =========================================================================
@@ -551,6 +569,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // Review Workspace: Split View Rendering & Interactions
   // =========================================================================
 
+  function getVisibleIssues() {
+    return docIssues.filter(issue => {
+      const d = decisions[issue.id] || {};
+      if (currentFilter === 'all') return true;
+      if (currentFilter === 'needs_review') return !d.accepted && !d.rejected;
+      if (currentFilter === 'auto_accepted') return d.autoAccepted && d.accepted;
+      const t = (issue.error_type || '').toLowerCase();
+      if (currentFilter === 'clarity') return t === 'clarity' || t === 'style';
+      if (currentFilter === 'spacing') return t === 'spacing' || t === 'punctuation';
+      return t === currentFilter;
+    });
+  }
+
   function renderReviewWorkspace(filename) {
     reviewDocName.textContent = filename || 'Document.docx';
     uploadSection.classList.remove('active');
@@ -567,6 +598,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update footer progress
     updateReviewProgress();
+
+    // Reset active issue & initialize stepper / focus
+    currentActiveIssueId = null;
+    const visible = getVisibleIssues();
+    if (visible.length > 0) {
+      const first = visible.find(i => {
+        const d = decisions[i.id] || {};
+        return !d.accepted && !d.rejected;
+      }) || visible[0];
+      setTimeout(() => {
+        activateIssue(first.id, first.block_id, true);
+      }, 150);
+    } else {
+      updateStepperCounter();
+    }
   }
 
   btnBackToUpload.addEventListener('click', () => {
@@ -640,6 +686,17 @@ document.addEventListener('DOMContentLoaded', () => {
       chip.classList.add('active');
       currentFilter = chip.getAttribute('data-filter');
       renderSuggestionsList();
+      const visible = getVisibleIssues();
+      if (visible.length > 0) {
+        const first = visible.find(i => {
+          const d = decisions[i.id] || {};
+          return !d.accepted && !d.rejected;
+        }) || visible[0];
+        activateIssue(first.id, first.block_id, true);
+      } else {
+        if (inlinePopover) inlinePopover.classList.add('hidden');
+        updateStepperCounter();
+      }
     });
   });
 
@@ -678,9 +735,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Attach click listeners to highlighted spans
     docViewer.querySelectorAll('.inline-error-highlight').forEach(span => {
-      span.addEventListener('click', () => {
+      span.addEventListener('click', (e) => {
+        e.stopPropagation();
         const issueId = span.getAttribute('data-issue-id');
-        focusSuggestionCard(issueId);
+        const issue = docIssues.find(i => i.id === issueId);
+        activateIssue(issueId, issue ? issue.block_id : null, true);
       });
     });
   }
@@ -896,7 +955,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clicking anywhere on the suggestion card navigates directly to that part of the document!
     card.addEventListener('click', (e) => {
       if (e.target.closest('button') || e.target.closest('input')) return;
-      scrollToDocumentHighlight(issue.id, issue.block_id);
+      activateIssue(issue.id, issue.block_id, true);
     });
 
     // Hover on card focuses corresponding paragraph highlight
@@ -969,17 +1028,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateFilterCounts();
     updateReviewProgress();
+    updateStepperCounter();
+    if (inlinePopover && !inlinePopover.classList.contains('hidden') && currentActiveIssueId) {
+      updatePopoverDecisionUI(currentActiveIssueId);
+    }
   }
 
-  function scrollToDocumentHighlight(issueId, blockId) {
-    // Unfocus and remove pulse from previous highlights
-    docViewer.querySelectorAll('.pulse-target').forEach(el => el.classList.remove('pulse-target', 'focused'));
+  // =========================================================================
+  // Stepper, Dual-Scroll & In-Context Correction Popover
+  // =========================================================================
 
+  function updateStepperCounter() {
+    const visible = getVisibleIssues();
+    const total = visible.length;
+    let currentIdx = visible.findIndex(i => i.id === currentActiveIssueId);
+    if (currentIdx < 0 && total > 0) currentIdx = 0;
+    const displayNum = total > 0 ? currentIdx + 1 : 0;
+
+    if (errorCounterBadge) {
+      errorCounterBadge.textContent = `${displayNum} / ${total}`;
+    }
+    if (popoverIndexText) {
+      popoverIndexText.textContent = `${displayNum} / ${total}`;
+    }
+
+    const disabled = total <= 1;
+    if (btnPrevError) btnPrevError.disabled = disabled;
+    if (btnNextError) btnNextError.disabled = disabled;
+    if (popoverBtnPrev) popoverBtnPrev.disabled = disabled;
+    if (popoverBtnNext) popoverBtnNext.disabled = disabled;
+  }
+
+  function activateIssue(issueId, blockId, showPopover = true) {
+    if (!issueId) return;
+    currentActiveIssueId = issueId;
+
+    const targetIssue = docIssues.find(i => i.id === issueId);
+
+    // 1. Dual-Scroll Document: Focus & smoothly center the highlighted text
+    docViewer.querySelectorAll('.pulse-target').forEach(el => el.classList.remove('pulse-target', 'focused'));
     const span = docViewer.querySelector(`.inline-error-highlight[data-issue-id="${issueId}"]`);
     if (span) {
       span.classList.add('focused', 'pulse-target');
       span.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
+    } else if (blockId) {
       const p = document.getElementById(`view_${blockId}`);
       if (p) {
         p.classList.add('focused', 'pulse-target');
@@ -987,18 +1079,202 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // 2. Dual-Scroll Suggestion Cards: Focus & smoothly center the matching card
     document.querySelectorAll('.suggestion-card').forEach(c => c.classList.remove('focused'));
     const activeCard = document.getElementById(`card_${issueId}`);
-    if (activeCard) activeCard.classList.add('focused');
+    if (activeCard) {
+      activeCard.classList.add('focused');
+      activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 3. Update Stepper Status Badge
+    updateStepperCounter();
+
+    // 4. In-Context Popover ("see it and correct it right there itself")
+    if (showPopover && span && targetIssue && inlinePopover) {
+      const errType = (targetIssue.error_type || 'grammar').toLowerCase();
+      const typeLabel = errType.charAt(0).toUpperCase() + errType.slice(1);
+
+      if (popoverBadge) {
+        popoverBadge.textContent = typeLabel;
+        popoverBadge.className = `type-badge badge-${errType}`;
+      }
+      if (popoverSeverity) {
+        popoverSeverity.textContent = targetIssue.severity || 'suggestion';
+      }
+      if (popoverExplanation) {
+        popoverExplanation.textContent = targetIssue.explanation || '';
+      }
+
+      const d = decisions[issueId] || { accepted: false, rejected: false, editedText: targetIssue.suggested_text };
+      if (popoverOrig) {
+        popoverOrig.innerHTML = formatDiffContent(targetIssue.original_text, errType === 'spacing');
+      }
+      if (popoverRepl) {
+        popoverRepl.innerHTML = formatDiffContent(d.editedText || targetIssue.suggested_text, errType === 'spacing');
+      }
+
+      updatePopoverDecisionUI(issueId);
+
+      // Display and position popover
+      inlinePopover.classList.remove('hidden');
+      updatePopoverPosition();
+
+      // Recalculate positioning as smooth scrolling animates
+      setTimeout(updatePopoverPosition, 100);
+      setTimeout(updatePopoverPosition, 250);
+      setTimeout(updatePopoverPosition, 450);
+    } else if (inlinePopover && (!showPopover || !span)) {
+      inlinePopover.classList.add('hidden');
+    }
+  }
+
+  function updatePopoverPosition() {
+    if (!currentActiveIssueId || !inlinePopover || inlinePopover.classList.contains('hidden')) return;
+
+    const span = docViewer.querySelector(`.inline-error-highlight[data-issue-id="${currentActiveIssueId}"]`);
+    if (!span) {
+      inlinePopover.classList.add('hidden');
+      return;
+    }
+
+    const panel = docViewer.parentElement; // .doc-view-panel
+    if (!panel) return;
+
+    const panelRect = panel.getBoundingClientRect();
+    const spanRect = span.getBoundingClientRect();
+    const docViewerRect = docViewer.getBoundingClientRect();
+
+    // Check if span is scrolled out of viewable docViewer frame
+    if (spanRect.bottom < docViewerRect.top - 20 || spanRect.top > docViewerRect.bottom + 20) {
+      inlinePopover.classList.add('hidden');
+      return;
+    }
+
+    const popoverWidth = inlinePopover.offsetWidth || 360;
+    const popoverHeight = inlinePopover.offsetHeight || 190;
+
+    // Centered horizontally over the span, clamped within panel bounds
+    let left = (spanRect.left + spanRect.width / 2) - panelRect.left - (popoverWidth / 2);
+    left = Math.max(16, Math.min(panelRect.width - popoverWidth - 16, left));
+
+    // Vertical placement: prefer below, flip above if close to bottom
+    let top = spanRect.bottom - panelRect.top + 10;
+    const fitsBelow = (top + popoverHeight <= panelRect.height - 16);
+    const arrow = inlinePopover.querySelector('.popover-arrow');
+
+    if (!fitsBelow && (spanRect.top - panelRect.top - popoverHeight - 10 > 10)) {
+      top = spanRect.top - panelRect.top - popoverHeight - 10;
+      inlinePopover.classList.add('popover-above');
+    } else {
+      inlinePopover.classList.remove('popover-above');
+    }
+
+    inlinePopover.style.top = `${Math.round(top)}px`;
+    inlinePopover.style.left = `${Math.round(left)}px`;
+
+    // Position arrow directly pointing to the highlighted word
+    if (arrow) {
+      const spanCenter = (spanRect.left + spanRect.width / 2) - panelRect.left;
+      let arrowLeft = spanCenter - left - 6;
+      arrowLeft = Math.max(20, Math.min(popoverWidth - 28, arrowLeft));
+      arrow.style.left = `${Math.round(arrowLeft)}px`;
+    }
+  }
+
+  function updatePopoverDecisionUI(issueId) {
+    if (!inlinePopover || inlinePopover.classList.contains('hidden')) return;
+    const issue = docIssues.find(i => i.id === issueId);
+    if (!issue) return;
+    const d = decisions[issueId] || { accepted: false, rejected: false, editedText: issue.suggested_text };
+    if (d.accepted) {
+      if (popoverBtnAccept) {
+        popoverBtnAccept.textContent = '✓ Accepted';
+        popoverBtnAccept.className = 'btn btn-success btn-sm';
+      }
+      if (popoverBtnReject) {
+        popoverBtnReject.textContent = 'Revert';
+        popoverBtnReject.className = 'btn btn-secondary btn-sm';
+      }
+    } else if (d.rejected) {
+      if (popoverBtnAccept) {
+        popoverBtnAccept.textContent = '✓ Accept';
+        popoverBtnAccept.className = 'btn btn-outline-success btn-sm';
+      }
+      if (popoverBtnReject) {
+        popoverBtnReject.textContent = '✗ Dismissed';
+        popoverBtnReject.className = 'btn btn-danger btn-sm';
+      }
+    } else {
+      if (popoverBtnAccept) {
+        popoverBtnAccept.textContent = '✓ Accept';
+        popoverBtnAccept.className = 'btn btn-success btn-sm';
+      }
+      if (popoverBtnReject) {
+        popoverBtnReject.textContent = '✗ Reject';
+        popoverBtnReject.className = 'btn btn-outline-danger btn-sm';
+      }
+    }
+
+    if (popoverRepl && d.editedText) {
+      popoverRepl.innerHTML = formatDiffContent(d.editedText, (issue.error_type || '').toLowerCase() === 'spacing');
+    }
+  }
+
+  function nextIssue(preferPending = false) {
+    const visible = getVisibleIssues();
+    if (visible.length === 0) return;
+
+    let targetIndex = -1;
+    const currentIndex = visible.findIndex(i => i.id === currentActiveIssueId);
+
+    if (preferPending) {
+      for (let i = currentIndex + 1; i < visible.length; i++) {
+        const d = decisions[visible[i].id] || {};
+        if (!d.accepted && !d.rejected) {
+          targetIndex = i;
+          break;
+        }
+      }
+      if (targetIndex === -1) {
+        for (let i = 0; i <= currentIndex; i++) {
+          const d = decisions[visible[i].id] || {};
+          if (!d.accepted && !d.rejected) {
+            targetIndex = i;
+            break;
+          }
+        }
+      }
+    }
+
+    if (targetIndex === -1) {
+      targetIndex = (currentIndex + 1) % visible.length;
+    }
+
+    const nextTarget = visible[targetIndex];
+    if (nextTarget) {
+      activateIssue(nextTarget.id, nextTarget.block_id, true);
+    }
+  }
+
+  function prevIssue() {
+    const visible = getVisibleIssues();
+    if (visible.length === 0) return;
+    const currentIndex = visible.findIndex(i => i.id === currentActiveIssueId);
+    let prevIndex = currentIndex - 1;
+    if (prevIndex < 0) prevIndex = visible.length - 1;
+    const prevTarget = visible[prevIndex];
+    if (prevTarget) {
+      activateIssue(prevTarget.id, prevTarget.block_id, true);
+    }
+  }
+
+  function scrollToDocumentHighlight(issueId, blockId) {
+    activateIssue(issueId, blockId, true);
   }
 
   function focusSuggestionCard(issueId) {
-    const card = document.getElementById(`card_${issueId}`);
-    if (card) {
-      document.querySelectorAll('.suggestion-card').forEach(c => c.classList.remove('focused'));
-      card.classList.add('focused');
-      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    activateIssue(issueId, null, true);
   }
 
   function highlightDocumentSpan(issueId, active) {
@@ -1006,11 +1282,90 @@ document.addEventListener('DOMContentLoaded', () => {
     if (span) {
       if (active) {
         span.classList.add('focused');
-      } else {
+      } else if (currentActiveIssueId !== issueId) {
         span.classList.remove('focused');
       }
     }
   }
+
+  // Stepper Toolbar Listeners
+  if (btnPrevError) {
+    btnPrevError.addEventListener('click', (e) => {
+      e.stopPropagation();
+      prevIssue();
+    });
+  }
+  if (btnNextError) {
+    btnNextError.addEventListener('click', (e) => {
+      e.stopPropagation();
+      nextIssue(false);
+    });
+  }
+
+  // In-Context Popover Listeners
+  if (btnClosePopover) {
+    btnClosePopover.addEventListener('click', (e) => {
+      e.stopPropagation();
+      inlinePopover.classList.add('hidden');
+    });
+  }
+
+  if (popoverBtnPrev) {
+    popoverBtnPrev.addEventListener('click', (e) => {
+      e.stopPropagation();
+      prevIssue();
+    });
+  }
+  if (popoverBtnNext) {
+    popoverBtnNext.addEventListener('click', (e) => {
+      e.stopPropagation();
+      nextIssue(false);
+    });
+  }
+
+  if (popoverBtnAccept) {
+    popoverBtnAccept.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!currentActiveIssueId) return;
+      const targetId = currentActiveIssueId;
+      setDecision(targetId, true, false, true);
+      updatePopoverDecisionUI(targetId);
+      setTimeout(() => {
+        nextIssue(true);
+      }, 180);
+    });
+  }
+
+  if (popoverBtnReject) {
+    popoverBtnReject.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!currentActiveIssueId) return;
+      const targetId = currentActiveIssueId;
+      const d = decisions[targetId] || {};
+      if (d.accepted) {
+        setDecision(targetId, false, false, true); // Revert
+      } else {
+        setDecision(targetId, false, true, true); // Dismiss
+      }
+      updatePopoverDecisionUI(targetId);
+      setTimeout(() => {
+        nextIssue(true);
+      }, 180);
+    });
+  }
+
+  // Keep popover pinned to highlight during scrolling or window resizing
+  docViewer.addEventListener('scroll', () => {
+    if (inlinePopover && !inlinePopover.classList.contains('hidden')) {
+      updatePopoverPosition();
+    }
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    if (inlinePopover && !inlinePopover.classList.contains('hidden')) {
+      updatePopoverPosition();
+    }
+  }, { passive: true });
 
   // Bulk Actions
   btnAcceptAll.addEventListener('click', () => {
@@ -1123,20 +1478,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Keyboard Shortcuts (A = Accept, R = Reject, Tab/Arrow = Navigate)
+  // Comprehensive Keyboard Shortcuts:
+  // - ArrowRight / ArrowDown: Next error
+  // - ArrowLeft / ArrowUp: Previous error
+  // - A: Accept active error and advance
+  // - R or X: Reject/Dismiss active error and advance
+  // - Escape: Close in-context popover
   document.addEventListener('keydown', (e) => {
-    // Ignore if inside an input or textarea
+    // Ignore when typing inside form elements
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
 
     if (reviewSection.classList.contains('active')) {
-      const focusedCard = document.querySelector('.suggestion-card.focused') || document.querySelector('.suggestion-card');
-      if (!focusedCard) return;
-
-      const issueId = focusedCard.id.replace('card_', '');
-      if (e.key === 'a' || e.key === 'A') {
-        setDecision(issueId, true, false);
-      } else if (e.key === 'r' || e.key === 'R') {
-        setDecision(issueId, false, true);
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        nextIssue(false);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        prevIssue();
+      } else if (e.key === 'a' || e.key === 'A') {
+        if (currentActiveIssueId) {
+          e.preventDefault();
+          const targetId = currentActiveIssueId;
+          setDecision(targetId, true, false, true);
+          updatePopoverDecisionUI(targetId);
+          setTimeout(() => nextIssue(true), 180);
+        }
+      } else if (e.key === 'r' || e.key === 'R' || e.key === 'x' || e.key === 'X') {
+        if (currentActiveIssueId) {
+          e.preventDefault();
+          const targetId = currentActiveIssueId;
+          setDecision(targetId, false, true, true);
+          updatePopoverDecisionUI(targetId);
+          setTimeout(() => nextIssue(true), 180);
+        }
+      } else if (e.key === 'Escape') {
+        if (inlinePopover) inlinePopover.classList.add('hidden');
       }
     }
   });

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23881337'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8' stroke='%23B4944C' stroke-width='2' fill='none'/></svg>">
-  <link rel="stylesheet" href="/static/style.css?v=stark11.0">
+  <link rel="stylesheet" href="/static/style.css?v=stark12.0">
 </head>
 <body class="theme-light">
 
@@ -511,7 +511,7 @@
         </div>
 
         <div class="topbar-right">
-          <button id="btnLoadSample" class="btn btn-secondary btn-sm" title="Test with a realistic sample report">
+          <button id="btnLoadSample" class="btn btn-secondary btn-sm" title="Test with a realistic sample report" onclick="window.starkLoadSampleDoc && window.starkLoadSampleDoc()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
@@ -778,6 +778,7 @@
           </div>
         </div>
       </div>
+      </div>
       <!-- END WORKSPACE VIEW 1 -->
 
       <!-- WORKSPACE VIEW 2: MISSING ITEM INFO AUTOMATION -->
@@ -925,10 +926,10 @@
                 <div id="dropzoneSelected" class="dropzone-selected-content hidden">
                   <span class="selected-file-icon">📊</span>
                   <div class="selected-file-info">
-                    <strong id="selectedFileName">report.xlsx</strong>
+                    <strong id="missingSelectedFileName">report.xlsx</strong>
                     <span id="selectedFileSize">0 KB</span>
                   </div>
-                  <button type="button" id="btnRemoveFile" class="btn-remove-selected" title="Remove file">&times;</button>
+                  <button type="button" id="btnRemoveMissingFile" class="btn-remove-selected" title="Remove file">&times;</button>
                 </div>
               </div>
 
@@ -1134,6 +1135,6 @@
     </div>
   </div>
 
-  <script src="/static/app.js?v=stark11.0"></script>
+  <script src="/static/app.js?v=stark12.0"></script>
 </body>
 </html>

@@ -564,7 +564,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Setup Drag & Drop
   if (dropZone) {
     dropZone.addEventListener('click', (e) => {
-      if (e.target !== btnRemoveFile) fileInput.click();
+      if (e.target === fileInput) return;
+      if (btnRemoveFile && (e.target === btnRemoveFile || btnRemoveFile.contains(e.target))) return;
+      if (fileInput) fileInput.click();
     });
 
     ['dragenter', 'dragover'].forEach(eventName => {
@@ -670,9 +672,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Try Sample Report Button
+  // Try Sample Report Button (Smart contextual routing)
   if (btnLoadSample) {
     btnLoadSample.addEventListener('click', async () => {
+      // If currently on Missing Item Info view, route to Missing Items sample!
+      const currentMissingView = document.getElementById('viewMissingItems');
+      if (currentMissingView && !currentMissingView.classList.contains('hidden')) {
+        if (window.starkLoadSampleMissing) {
+          window.starkLoadSampleMissing();
+          return;
+        }
+      }
+
       showLoading('Loading Sample Report...', 'Fetching pre-configured Stark quarterly report with realistic grammar, spelling, and spacing errors...');
       try {
         const resp = await authFetch('/api/sample-doc');
@@ -681,17 +692,21 @@ document.addEventListener('DOMContentLoaded', () => {
         currentFile = new File([blob], 'Stark_Quarterly_Report_Sample.docx', {
           type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         });
-        selectedFileName.textContent = currentFile.name;
-        selectedFileInfo.classList.remove('hidden');
+        if (selectedFileName) selectedFileName.textContent = currentFile.name;
+        if (selectedFileInfo) selectedFileInfo.classList.remove('hidden');
         hideLoading();
         // Immediately start analysis for seamless testing!
-        btnStartAnalysis.click();
+        if (btnStartAnalysis) btnStartAnalysis.click();
       } catch (err) {
         hideLoading();
         alert('Failed to load sample: ' + err.message);
       }
     });
   }
+
+  window.starkLoadSampleDoc = function() {
+    if (btnLoadSample) btnLoadSample.click();
+  };
 
   // =========================================================================
   // Start Proofreading Analysis
@@ -1527,8 +1542,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const viewProofreader = document.getElementById('viewProofreader');
   const viewMissingItems = document.getElementById('viewMissingItems');
-  const navProofread = document.getElementById('navProofread');
-  const navDocMode = document.getElementById('navDocMode');
   const navMissingItems = document.getElementById('navMissingItems');
   const topbarHeading = document.querySelector('.topbar-heading');
 
@@ -1554,7 +1567,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (dropZone) dropZone.scrollIntoView({ behavior: 'smooth' });
       } else if (subMode === 'paste') {
-        const navQuickPaste = document.getElementById('navQuickPaste');
         if (navQuickPaste) {
           document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
           navQuickPaste.classList.add('active');
@@ -1717,15 +1729,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const missingFileInput = document.getElementById('missingFileInput');
   const dropzoneIdle = document.getElementById('dropzoneIdle');
   const dropzoneSelected = document.getElementById('dropzoneSelected');
-  const selectedFileName = document.getElementById('selectedFileName');
+  const missingSelectedFileName = document.getElementById('missingSelectedFileName') || document.getElementById('selectedFileName');
   const selectedFileSize = document.getElementById('selectedFileSize');
-  const btnRemoveFile = document.getElementById('btnRemoveFile');
+  const btnRemoveMissingFile = document.getElementById('btnRemoveMissingFile') || document.getElementById('btnRemoveFile');
   const btnCleanUploadFile = document.getElementById('btnCleanUploadFile');
   let currentUploadExcel = null;
 
   if (missingDropzone && missingFileInput) {
     missingDropzone.addEventListener('click', (e) => {
-      if (e.target.id === 'btnRemoveFile') return;
+      if (e.target === missingFileInput) return;
+      if (btnRemoveMissingFile && (e.target === btnRemoveMissingFile || btnRemoveMissingFile.contains(e.target))) return;
       missingFileInput.click();
     });
 
@@ -1761,7 +1774,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentUploadExcel = file;
     if (dropzoneIdle) dropzoneIdle.classList.add('hidden');
     if (dropzoneSelected) dropzoneSelected.classList.remove('hidden');
-    if (selectedFileName) selectedFileName.textContent = file.name;
+    if (missingSelectedFileName) missingSelectedFileName.textContent = file.name;
     if (selectedFileSize) selectedFileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
     if (btnCleanUploadFile) btnCleanUploadFile.disabled = false;
 
@@ -1774,8 +1787,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (btnRemoveFile) {
-    btnRemoveFile.addEventListener('click', (e) => {
+  if (btnRemoveMissingFile) {
+    btnRemoveMissingFile.addEventListener('click', (e) => {
       e.stopPropagation();
       currentUploadExcel = null;
       if (missingFileInput) missingFileInput.value = '';

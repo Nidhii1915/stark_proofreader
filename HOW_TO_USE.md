@@ -113,3 +113,42 @@ Once analyzed, the screen switches to the interactive dual-pane review mode:
 - **Clear & New Document**: Click the trash icon (`🧹`) at the bottom of the left pane anytime to clear the workspace and start a new document.
 - **Theme Toggle**: Click **Toggle Theme** at the bottom of the sidebar to switch between Clean Light Mode and Dark Mode.
 - **Privacy & Security**: Documents are processed in-memory for proofreading and are never shared or stored permanently.
+
+---
+
+## 📊 8. Missing Item Info Generator (Stark Operations)
+
+The unified **Stark Suite** includes the **Missing Item Info Generator** for operations and vendor management.
+
+### How to Access:
+Click **`Missing Item Info`** in the left sidebar navigation.
+
+### Confidentiality Guarantee:
+- **🔒 Zero-Trace Ephemeral Processing**: Uploaded reports and generated vendor workbooks are stored in temporary memory and **auto-purged immediately upon download** (or after 15 minutes TTL). No sensitive item or vendor data is retained on the server.
+- **🛡️ Server-Side Credentials**: Stark Premium portal login credentials are encrypted on the server. Team members **never** need to see, enter, or share login passwords.
+
+### Two Ways to Generate Vendor Files:
+
+#### Option A: Automated Portal Fetch
+1. In the **Automated Portal Fetch** tab, select or type the exact **Brand Name** (e.g., `Marc Jacobs`, `Michael Kors`, `Coach`).
+2. Click **Generate Vendor Send File**.
+3. Watch the live step-by-step progress as the server logs in, navigates to `MissingItemDataReport.aspx`, unchecks inventory/image constraints, downloads the export, and formats the vendor file.
+4. Click **Download Vendor Excel (.xlsx)**.
+
+#### Option B: Direct Raw Excel Upload (Fastest & 100% Reliable)
+If you already downloaded `MissingItemDataReport.xlsx` from Stark Premium:
+1. Switch to the **Direct Excel Upload** tab.
+2. (Optional) Enter the brand name.
+3. Drag & drop the `.xlsx` file into the box.
+4. Click **Clean & Format Vendor Workbook**.
+5. Within **1 second**, view the live data preview and statistics, and download your standardized vendor file!
+
+### Vendor Standards Enforced Automatically:
+- ✅ **Model#/SKU** and **Title/Item Name** are kept intact.
+- ✅ Internal database columns (`systemid`, `stockqty`, `expectedinventorydate`, etc.) are stripped.
+- ✅ **UPC** is positioned in **Column D** (with Long Description in Column C).
+- ✅ Item dimensions are expanded to 4 separate columns (`HEIGHT`, `LENGTH`, `WIDTH`, `WEIGHT`).
+- ✅ Missing fields are left **blank** for the brand to fill; non-missing fields are marked **`N/A`**.
+- ✅ Rows with zero missing fields are automatically dropped.
+- ✅ Formatted with Stark Executive styling (Arial 10pt bold white on black header, frozen top row, calibrated column widths).
+

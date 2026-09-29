@@ -3,8 +3,12 @@ venv/
 __pycache__/
 *.pyc
 sessions_cache/
+ephemeral_workbooks/
 sample_docs/
 *.docx
+*.xlsx
+*.xls
 *.log
 .vscode/
 .idea/
+

@@ -147,6 +147,20 @@
           <span class="nav-label">Quick Text Editor</span>
         </button>
 
+        <button class="nav-item" id="navMissingItems" title="Stark Premium Missing Item Info">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="3" y1="15" x2="21" y2="15"></line>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+              <line x1="15" y1="3" x2="15" y2="21"></line>
+            </svg>
+          </span>
+          <span class="nav-label">Missing Item Info</span>
+          <span class="nav-badge-new">Suite</span>
+        </button>
+
         <div class="sidebar-divider"></div>
 
         <button class="nav-item" id="btnSettingsNav" title="Gemini AI Key & Model">
@@ -242,8 +256,10 @@
         </div>
       </header>
 
-      <!-- Signature Wordvice AI Card Wrapper -->
-      <div class="wordvice-card-wrapper">
+      <!-- WORKSPACE VIEW 1: AI PROOFREADER -->
+      <div id="viewProofreader" class="workspace-view active">
+        <!-- Signature Wordvice AI Card Wrapper -->
+        <div class="wordvice-card-wrapper">
         <div class="wordvice-card">
           
           <!-- Sub-Toolbar (Language, Modes, Document Type, Action) -->
@@ -487,6 +503,242 @@
           </div>
         </div>
       </div>
+      <!-- END WORKSPACE VIEW 1 -->
+
+      <!-- WORKSPACE VIEW 2: MISSING ITEM INFO AUTOMATION -->
+      <div id="viewMissingItems" class="workspace-view hidden">
+        <div class="missing-items-wrapper">
+          
+          <!-- Executive Header Banner -->
+          <div class="missing-header-card">
+            <div class="missing-header-left">
+              <div class="suite-tag">
+                <span class="suite-dot"></span>
+                <span>Stark Operations Suite</span>
+              </div>
+              <h2 class="missing-page-title">Missing Item Info Generator</h2>
+              <p class="missing-page-subtitle">
+                Automate and format Stark Premium <strong>Missing Item Data Reports</strong> into clean, standardized vendor-ready Excel workbooks.
+              </p>
+            </div>
+
+            <div class="missing-header-right">
+              <div class="privacy-shield-box" title="Confidentiality Guarantee">
+                <div class="shield-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </div>
+                <div class="shield-content">
+                  <div class="shield-title">Zero-Trace Privacy</div>
+                  <div class="shield-desc">Server-managed credentials. Workbooks auto-purged on download.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dual Flow Selector & Main Card -->
+          <div class="missing-main-card">
+            <!-- Mode Tabs Header -->
+            <div class="missing-tabs-nav">
+              <button class="missing-tab-btn active" id="tabAutoFetch">
+                <span class="tab-icon">⚡</span>
+                <span class="tab-title">Automated Portal Fetch</span>
+                <span class="tab-tag">Direct Portal</span>
+              </button>
+              <button class="missing-tab-btn" id="tabDirectUpload">
+                <span class="tab-icon">📂</span>
+                <span class="tab-title">Direct Excel Upload</span>
+                <span class="tab-tag">1-Sec Clean</span>
+              </button>
+            </div>
+
+            <!-- Panel 1: Automated Portal Fetch -->
+            <div id="panelAutoFetch" class="missing-tab-panel active">
+              <div class="portal-connection-status" id="portalStatusBox">
+                <span class="pulse-indicator-dot" id="portalDot"></span>
+                <span class="portal-status-text" id="portalStatusText">Checking Stark Premium portal connection...</span>
+              </div>
+
+              <div class="action-form-row">
+                <div class="brand-input-group">
+                  <label for="fetchBrandInput" class="input-label-tag">Brand Name in Stark Premium</label>
+                  <div class="input-with-icon-wrap">
+                    <span class="input-inline-icon">🏷️</span>
+                    <input 
+                      type="text" 
+                      id="fetchBrandInput" 
+                      class="clean-brand-input" 
+                      list="starkBrandSuggestions" 
+                      placeholder="Start typing brand name, e.g. Marc Jacobs..."
+                      autocomplete="off"
+                    >
+                    <datalist id="starkBrandSuggestions"></datalist>
+                  </div>
+                </div>
+
+                <div class="action-btn-group">
+                  <button id="btnTriggerFetch" class="btn-stark-action">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span>Generate Vendor Send File</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Animated Progress Timeline -->
+              <div id="fetchProgressBox" class="fetch-progress-box hidden">
+                <div class="progress-box-top">
+                  <div class="progress-spinner-ring" id="fetchSpinner"></div>
+                  <div>
+                    <div class="progress-current-step" id="fetchCurrentStep">Executing Automation...</div>
+                    <div class="progress-sub-text">Please keep this tab open while Stark Premium generates the report.</div>
+                  </div>
+                  <span class="job-pill-id" id="jobPillId">Job: --</span>
+                </div>
+                <div class="steps-flow-list" id="fetchStepsList"></div>
+              </div>
+            </div>
+
+            <!-- Panel 2: Direct Raw Excel Upload -->
+            <div id="panelDirectUpload" class="missing-tab-panel hidden">
+              <div class="upload-tip-banner">
+                <span class="tip-icon">💡</span>
+                <span class="tip-text">
+                  Have an export already? Drop any <strong>MissingItemDataReport.xlsx</strong> here. It strips internal columns, removes completed rows, expands item dimensions, aligns UPC to column D, and applies executive styling in <strong>under 1 second</strong>!
+                </span>
+              </div>
+
+              <div class="brand-input-group" style="margin-bottom: 18px;">
+                <label for="uploadBrandInput" class="input-label-tag">Brand Name (Optional — used for file naming)</label>
+                <div class="input-with-icon-wrap">
+                  <span class="input-inline-icon">🏷️</span>
+                  <input 
+                    type="text" 
+                    id="uploadBrandInput" 
+                    class="clean-brand-input" 
+                    placeholder="e.g. Marc Jacobs (or leave blank to auto-detect)"
+                  >
+                </div>
+              </div>
+
+              <div id="missingDropzone" class="missing-dropzone">
+                <input type="file" id="missingFileInput" class="hidden-file-input" accept=".xlsx,.xls">
+                <div class="dropzone-idle-content" id="dropzoneIdle">
+                  <div class="dropzone-crest-icon">
+                    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="12" y1="18" x2="12" y2="12"></line>
+                      <polyline points="9 15 12 12 15 15"></polyline>
+                    </svg>
+                  </div>
+                  <div class="dropzone-prompt">Drop raw Stark export here, or <span class="highlight-browse">browse files</span></div>
+                  <div class="dropzone-types">Supports .xlsx and .xls exports directly from Stark Premium</div>
+                </div>
+
+                <div id="dropzoneSelected" class="dropzone-selected-content hidden">
+                  <span class="selected-file-icon">📊</span>
+                  <div class="selected-file-info">
+                    <strong id="selectedFileName">report.xlsx</strong>
+                    <span id="selectedFileSize">0 KB</span>
+                  </div>
+                  <button type="button" id="btnRemoveFile" class="btn-remove-selected" title="Remove file">&times;</button>
+                </div>
+              </div>
+
+              <div class="upload-btn-row">
+                <button id="btnCleanUploadFile" class="btn-stark-action" disabled>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>Clean & Format Vendor Workbook</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- SHARED RESULTS & PREVIEW SECTION -->
+            <div id="missingResultsArea" class="missing-results-area hidden">
+              <div class="results-top-banner">
+                <div class="results-identity">
+                  <div class="results-check-circle">✓</div>
+                  <div>
+                    <h3 class="results-main-title">Vendor Send File Ready</h3>
+                    <p class="results-filename" id="resultsFilename">Brand_Missing_Item_Send_File.xlsx</p>
+                  </div>
+                </div>
+
+                <a id="btnDownloadResultExcel" href="#" class="btn-download-glow">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>Download Vendor Excel (.xlsx)</span>
+                </a>
+              </div>
+
+              <!-- Metric Stats Cards -->
+              <div class="metrics-dashboard-grid">
+                <div class="metric-dashboard-card">
+                  <span class="metric-caption">Raw Export Rows</span>
+                  <span class="metric-num" id="statSourceCount">0</span>
+                  <span class="metric-sub">From Stark report</span>
+                </div>
+                <div class="metric-dashboard-card card-retained">
+                  <span class="metric-caption">Retained Vendor Rows</span>
+                  <span class="metric-num" id="statRetainedCount">0</span>
+                  <span class="metric-sub">Missing fields to send</span>
+                </div>
+                <div class="metric-dashboard-card card-dropped">
+                  <span class="metric-caption">Complete Rows Dropped</span>
+                  <span class="metric-num" id="statDroppedCount">0</span>
+                  <span class="metric-sub">Zero missing data</span>
+                </div>
+                <div class="metric-dashboard-card">
+                  <span class="metric-caption">Vendor Columns</span>
+                  <span class="metric-num" id="statColsCount">0</span>
+                  <span class="metric-sub">Standard vendor order</span>
+                </div>
+              </div>
+
+              <!-- Vendor Rules Applied Chips -->
+              <div class="vendor-standards-bar">
+                <span class="standards-bar-title">Stark Standards Applied:</span>
+                <span class="standard-pill">✓ Model#/SKU & Title Kept</span>
+                <span class="standard-pill">✓ UPC Aligned to Column D</span>
+                <span class="standard-pill">✓ Dimensions (HxLxWxWt) Expanded</span>
+                <span class="standard-pill">✓ Missing Cells Blank (For Vendor)</span>
+                <span class="standard-pill">✓ Non-Missing Mapped to N/A</span>
+                <span class="standard-pill">✓ Header Arial 10pt Bold White/Black</span>
+              </div>
+
+              <!-- Preview Table -->
+              <div class="preview-panel">
+                <div class="preview-panel-header">
+                  <div class="preview-title-wrap">
+                    <h4>Live Data Preview (First 10 Rows)</h4>
+                    <span class="preview-legend">
+                      <span class="legend-badge badge-blank">Blank = Vendor Fill-in</span>
+                      <span class="legend-badge badge-na">N/A = Complete</span>
+                    </span>
+                  </div>
+                </div>
+                <div class="table-responsive-wrapper">
+                  <table class="stark-vendor-table" id="missingVendorTable">
+                    <thead id="vendorTableHead"></thead>
+                    <tbody id="vendorTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <!-- END WORKSPACE VIEW 2 -->
     </main>
   </div>
 

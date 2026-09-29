@@ -1450,6 +1450,363 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // =========================================================================
+  // WORKSPACE VIEW SWITCHING & MISSING ITEM INFO MODULE
+  // =========================================================================
+  function escapeHtmlStr(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  const viewProofreader = document.getElementById('viewProofreader');
+  const viewMissingItems = document.getElementById('viewMissingItems');
+  const navProofread = document.getElementById('navProofread');
+  const navDocMode = document.getElementById('navDocMode');
+  const navMissingItems = document.getElementById('navMissingItems');
+  const topbarHeading = document.querySelector('.topbar-heading');
+
+  function switchWorkspaceView(viewName) {
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+    
+    if (viewName === 'missing-items') {
+      if (viewProofreader) viewProofreader.classList.add('hidden');
+      if (viewMissingItems) viewMissingItems.classList.remove('hidden');
+      if (navMissingItems) navMissingItems.classList.add('active');
+      if (topbarHeading) topbarHeading.textContent = 'Missing Item Info Generator';
+      loadMissingItemsStatus();
+    } else {
+      if (viewMissingItems) viewMissingItems.classList.add('hidden');
+      if (viewProofreader) viewProofreader.classList.remove('hidden');
+      if (navProofread) navProofread.classList.add('active');
+      if (topbarHeading) topbarHeading.textContent = 'AI Proofreader';
+    }
+  }
+
+  if (navProofread) navProofread.addEventListener('click', () => switchWorkspaceView('proofreader'));
+  if (navDocMode) navDocMode.addEventListener('click', () => switchWorkspaceView('proofreader'));
+  if (navMissingItems) navMissingItems.addEventListener('click', () => switchWorkspaceView('missing-items'));
+
+  // Missing Items Sub-Tabs
+  const tabAutoFetch = document.getElementById('tabAutoFetch');
+  const tabDirectUpload = document.getElementById('tabDirectUpload');
+  const panelAutoFetch = document.getElementById('panelAutoFetch');
+  const panelDirectUpload = document.getElementById('panelDirectUpload');
+
+  if (tabAutoFetch && tabDirectUpload) {
+    tabAutoFetch.addEventListener('click', () => {
+      tabAutoFetch.classList.add('active');
+      tabDirectUpload.classList.remove('active');
+      panelAutoFetch.classList.remove('hidden');
+      panelDirectUpload.classList.add('hidden');
+    });
+
+    tabDirectUpload.addEventListener('click', () => {
+      tabDirectUpload.classList.add('active');
+      tabAutoFetch.classList.remove('active');
+      panelDirectUpload.classList.remove('hidden');
+      panelAutoFetch.classList.add('hidden');
+    });
+  }
+
+  // Portal status & Brands
+  const portalDot = document.getElementById('portalDot');
+  const portalStatusText = document.getElementById('portalStatusText');
+  const starkBrandSuggestions = document.getElementById('starkBrandSuggestions');
+
+  async function loadMissingItemsStatus() {
+    try {
+      const resp = await fetchWithAuth('/api/missing-items/status');
+      if (!resp.ok) return;
+      const data = await resp.json();
+
+      if (data.portal_configured) {
+        if (portalDot) portalDot.className = 'pulse-indicator-dot dot-ready';
+        if (portalStatusText) portalStatusText.innerHTML = '<strong>Portal Connected</strong> • Automated fetch is ready with server credentials.';
+      } else {
+        if (portalDot) portalDot.className = 'pulse-indicator-dot dot-warn';
+        if (portalStatusText) portalStatusText.innerHTML = '<strong>Server Credentials Not Configured</strong> • Please use <strong>Direct Excel Upload</strong> below, or ask your administrator to set STARK_PREMIUM_EMAIL & STARK_PREMIUM_PASSWORD on server.';
+      }
+
+      if (starkBrandSuggestions && Array.isArray(data.brands)) {
+        starkBrandSuggestions.innerHTML = '';
+        data.brands.forEach(b => {
+          const opt = document.createElement('option');
+          opt.value = b;
+          starkBrandSuggestions.appendChild(opt);
+        });
+      }
+    } catch (e) {
+      console.warn('Error loading missing items status:', e);
+    }
+  }
+
+  // Flow 1: Automated Portal Fetch
+  const fetchBrandInput = document.getElementById('fetchBrandInput');
+  const btnTriggerFetch = document.getElementById('btnTriggerFetch');
+  const fetchProgressBox = document.getElementById('fetchProgressBox');
+  const fetchCurrentStep = document.getElementById('fetchCurrentStep');
+  const jobPillId = document.getElementById('jobPillId');
+  const fetchStepsList = document.getElementById('fetchStepsList');
+  let fetchPollInterval = null;
+
+  if (btnTriggerFetch) {
+    btnTriggerFetch.addEventListener('click', async () => {
+      const brand = (fetchBrandInput ? fetchBrandInput.value : '').trim();
+      if (!brand) {
+        alert('Please enter or select a Brand Name.');
+        if (fetchBrandInput) fetchBrandInput.focus();
+        return;
+      }
+
+      btnTriggerFetch.disabled = true;
+      if (fetchProgressBox) fetchProgressBox.classList.remove('hidden');
+      if (fetchCurrentStep) fetchCurrentStep.textContent = `Starting Missing Item report for ${brand}...`;
+      if (fetchStepsList) fetchStepsList.innerHTML = '';
+      const missingResultsArea = document.getElementById('missingResultsArea');
+      if (missingResultsArea) missingResultsArea.classList.add('hidden');
+
+      try {
+        const resp = await fetchWithAuth('/api/missing-items/fetch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ brand })
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.detail || 'Could not launch portal automation.');
+        }
+
+        const data = await resp.json();
+        const jobId = data.job_id;
+        if (jobPillId) jobPillId.textContent = `Job: ${jobId}`;
+
+        // Poll job
+        if (fetchPollInterval) clearInterval(fetchPollInterval);
+        fetchPollInterval = setInterval(async () => {
+          try {
+            const jResp = await fetchWithAuth(`/api/missing-items/jobs/${jobId}`);
+            if (!jResp.ok) return;
+            const job = await jResp.json();
+
+            if (fetchCurrentStep) fetchCurrentStep.textContent = job.step || 'Processing...';
+
+            if (fetchStepsList && Array.isArray(job.steps)) {
+              fetchStepsList.innerHTML = job.steps.map(s => `
+                <div class="step-flow-item">
+                  <span class="step-check-icon">✓</span>
+                  <span>${escapeHtmlStr(s)}</span>
+                </div>
+              `).join('');
+            }
+
+            if (job.status === 'success') {
+              clearInterval(fetchPollInterval);
+              btnTriggerFetch.disabled = false;
+              if (fetchProgressBox) fetchProgressBox.classList.add('hidden');
+              displayMissingResults(job.result);
+            } else if (job.status === 'failed') {
+              clearInterval(fetchPollInterval);
+              btnTriggerFetch.disabled = false;
+              alert('Report Generation Error: ' + (job.error || 'Automation failed.'));
+            }
+          } catch (pollErr) {
+            console.error('Poll error:', pollErr);
+          }
+        }, 1500);
+
+      } catch (err) {
+        btnTriggerFetch.disabled = false;
+        alert(err.message);
+        if (fetchProgressBox) fetchProgressBox.classList.add('hidden');
+      }
+    });
+  }
+
+  // Flow 2: Direct Raw Excel Upload
+  const uploadBrandInput = document.getElementById('uploadBrandInput');
+  const missingDropzone = document.getElementById('missingDropzone');
+  const missingFileInput = document.getElementById('missingFileInput');
+  const dropzoneIdle = document.getElementById('dropzoneIdle');
+  const dropzoneSelected = document.getElementById('dropzoneSelected');
+  const selectedFileName = document.getElementById('selectedFileName');
+  const selectedFileSize = document.getElementById('selectedFileSize');
+  const btnRemoveFile = document.getElementById('btnRemoveFile');
+  const btnCleanUploadFile = document.getElementById('btnCleanUploadFile');
+  let currentUploadExcel = null;
+
+  if (missingDropzone && missingFileInput) {
+    missingDropzone.addEventListener('click', (e) => {
+      if (e.target.id === 'btnRemoveFile') return;
+      missingFileInput.click();
+    });
+
+    missingDropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      missingDropzone.classList.add('dragover');
+    });
+
+    missingDropzone.addEventListener('dragleave', () => {
+      missingDropzone.classList.remove('dragover');
+    });
+
+    missingDropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      missingDropzone.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleSelectedExcel(e.dataTransfer.files[0]);
+      }
+    });
+
+    missingFileInput.addEventListener('change', () => {
+      if (missingFileInput.files && missingFileInput.files.length > 0) {
+        handleSelectedExcel(missingFileInput.files[0]);
+      }
+    });
+  }
+
+  function handleSelectedExcel(file) {
+    if (!file.name.toLowerCase().match(/\.(xlsx|xls)$/)) {
+      alert('Please upload an Excel workbook (.xlsx or .xls).');
+      return;
+    }
+    currentUploadExcel = file;
+    if (dropzoneIdle) dropzoneIdle.classList.add('hidden');
+    if (dropzoneSelected) dropzoneSelected.classList.remove('hidden');
+    if (selectedFileName) selectedFileName.textContent = file.name;
+    if (selectedFileSize) selectedFileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+    if (btnCleanUploadFile) btnCleanUploadFile.disabled = false;
+
+    // Auto-populate brand input if empty and filename contains brand hint
+    if (uploadBrandInput && !uploadBrandInput.value.trim()) {
+      const match = file.name.match(/^([a-zA-Z\s_-]+?)(?:_MissingItem|\.xlsx|\.xls)/i);
+      if (match && match[1] && !match[1].toLowerCase().includes('report')) {
+        uploadBrandInput.value = match[1].replace(/[_-]+/g, ' ').trim();
+      }
+    }
+  }
+
+  if (btnRemoveFile) {
+    btnRemoveFile.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentUploadExcel = null;
+      if (missingFileInput) missingFileInput.value = '';
+      if (dropzoneIdle) dropzoneIdle.classList.remove('hidden');
+      if (dropzoneSelected) dropzoneSelected.classList.add('hidden');
+      if (btnCleanUploadFile) btnCleanUploadFile.disabled = true;
+    });
+  }
+
+  if (btnCleanUploadFile) {
+    btnCleanUploadFile.addEventListener('click', async () => {
+      if (!currentUploadExcel) return;
+      const brand = (uploadBrandInput ? uploadBrandInput.value : '').trim() || 'Brand';
+
+      btnCleanUploadFile.disabled = true;
+      btnCleanUploadFile.innerHTML = '<span>Cleaning & Formatting...</span>';
+
+      const formData = new FormData();
+      formData.append('file', currentUploadExcel);
+      formData.append('brand', brand);
+
+      try {
+        const resp = await fetchWithAuth('/api/missing-items/process-upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.detail || 'Processing failed');
+        }
+
+        const data = await resp.json();
+        displayMissingResults(data);
+      } catch (err) {
+        alert('Upload Clean Error: ' + err.message);
+      } finally {
+        btnCleanUploadFile.disabled = false;
+        btnCleanUploadFile.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Clean & Format Vendor Workbook</span>
+        `;
+      }
+    });
+  }
+
+  // Display Results, Stats & Preview
+  function displayMissingResults(res) {
+    const missingResultsArea = document.getElementById('missingResultsArea');
+    const resultsFilename = document.getElementById('resultsFilename');
+    const btnDownloadResultExcel = document.getElementById('btnDownloadResultExcel');
+    const statSourceCount = document.getElementById('statSourceCount');
+    const statRetainedCount = document.getElementById('statRetainedCount');
+    const statDroppedCount = document.getElementById('statDroppedCount');
+    const statColsCount = document.getElementById('statColsCount');
+    const vendorTableHead = document.getElementById('vendorTableHead');
+    const vendorTableBody = document.getElementById('vendorTableBody');
+
+    if (!res || !missingResultsArea) return;
+
+    if (resultsFilename) resultsFilename.textContent = res.send_filename || 'Vendor_Missing_Item_Send_File.xlsx';
+    if (btnDownloadResultExcel) {
+      btnDownloadResultExcel.href = res.download_url || `/api/missing-items/download/${res.job_id}`;
+      btnDownloadResultExcel.onclick = () => {
+        setTimeout(() => {
+          resultsFilename.innerHTML += ' <span style="color:#15803D; font-weight:700;">(Ephemeral Purge Completed ✓)</span>';
+        }, 1200);
+      };
+    }
+
+    if (statSourceCount) statSourceCount.textContent = res.source_rows || 0;
+    if (statRetainedCount) statRetainedCount.textContent = res.retained_rows || 0;
+    if (statDroppedCount) statDroppedCount.textContent = res.deleted_rows || 0;
+    if (statColsCount) statColsCount.textContent = (res.columns || []).length;
+
+    // Render preview table
+    if (vendorTableHead && vendorTableBody && Array.isArray(res.columns) && Array.isArray(res.preview_rows)) {
+      vendorTableHead.innerHTML = `
+        <tr>
+          ${res.columns.map(c => `<th>${escapeHtmlStr(c)}</th>`).join('')}
+        </tr>
+      `;
+
+      if (res.preview_rows.length === 0) {
+        vendorTableBody.innerHTML = `
+          <tr>
+            <td colspan="${res.columns.length}" style="text-align:center; padding: 2rem; color: var(--text-dim);">
+              No missing-item rows detected for this brand. All items in the report are fully populated!
+            </td>
+          </tr>
+        `;
+      } else {
+        vendorTableBody.innerHTML = res.preview_rows.map(row => `
+          <tr>
+            ${res.columns.map(c => {
+              const val = row[c] || '';
+              if (val === '') {
+                return `<td><span class="cell-blank-tag">Needs Fill-in</span></td>`;
+              } else if (val === 'N/A') {
+                return `<td><span class="cell-na-tag">N/A</span></td>`;
+              }
+              return `<td>${escapeHtmlStr(val)}</td>`;
+            }).join('')}
+          </tr>
+        `).join('');
+      }
+    }
+
+    missingResultsArea.classList.remove('hidden');
+    missingResultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   // Initialize
   initAuth();
 });

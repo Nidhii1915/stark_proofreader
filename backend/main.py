@@ -16,6 +16,15 @@ from docx import Document
 
 from backend.document_processor import DocxProcessor
 from backend.checker import GeminiProofreader
+from backend.excel_processor import (
+    process_raw_workbook,
+    get_ephemeral_file,
+    purge_ephemeral_job,
+    cleanup_expired_ephemeral_files,
+    EPHEMERAL_DIR,
+)
+from backend.stark_fetcher import fetcher
+
 
 # Load environment variables from .env
 load_dotenv()
@@ -426,3 +435,127 @@ async def get_sample_document():
             "Access-Control-Expose-Headers": "Content-Disposition"
         }
     )
+
+# =========================================================================
+# Stark Premium Missing Item Info Endpoints (Confidential & Ephemeral)
+# =========================================================================
+
+COMMON_BRANDS = [
+    "Marc Jacobs", "Michael Kors", "Kate Spade", "Coach", "Tory Burch",
+    "Calvin Klein", "Tommy Hilfiger", "Ralph Lauren", "Guess", "Fossil",
+    "Ray-Ban", "Oakley", "Prada", "Gucci", "Versace", "Burberry"
+]
+
+class FetchBrandRequest(BaseModel):
+    brand: str
+
+@app.get("/api/missing-items/status", dependencies=[Depends(require_team_auth)])
+async def get_missing_items_status():
+    """Returns portal configuration status and brand recommendations without exposing credentials."""
+    cleanup_expired_ephemeral_files()
+    is_configured = fetcher.is_configured()
+    return {
+        "portal_configured": is_configured,
+        "brands": COMMON_BRANDS,
+        "privacy": "Zero-Trace Ephemeral Processing active. Workbooks auto-purged on download.",
+        "message": "Automated Portal Fetch is ready." if is_configured else "Portal credentials not configured on server. Direct Excel Upload is available."
+    }
+
+@app.post("/api/missing-items/process-upload", dependencies=[Depends(require_team_auth)])
+async def process_missing_items_upload(
+    file: UploadFile = File(...),
+    brand: str = Form("Brand")
+):
+    """Direct drag-and-drop processing: Cleans raw Stark export into vendor workbook in 1 second."""
+    cleanup_expired_ephemeral_files()
+    if not file.filename.lower().endswith((".xlsx", ".xls")):
+        raise HTTPException(status_code=400, detail="Only Excel files (.xlsx, .xls) are supported.")
+
+    brand_clean = brand.strip() or "Brand"
+    job_id = uuid.uuid4().hex[:12]
+    job_dir = EPHEMERAL_DIR / job_id
+    job_dir.mkdir(parents=True, exist_ok=True)
+
+    temp_raw_path = job_dir / f"raw_upload_{file.filename}"
+    try:
+        content = await file.read()
+        temp_raw_path.write_bytes(content)
+
+        result = process_raw_workbook(temp_raw_path, brand_clean, job_id)
+        # Purge uploaded raw file immediately for confidentiality
+        temp_raw_path.unlink(missing_ok=True)
+
+        return {
+            "success": True,
+            "job_id": job_id,
+            "brand": brand_clean,
+            "send_filename": result["send_filename"],
+            "source_rows": result["source_rows"],
+            "retained_rows": result["retained_rows"],
+            "deleted_rows": result["deleted_rows"],
+            "columns": result["columns"],
+            "preview_rows": result["preview_rows"],
+            "download_url": f"/api/missing-items/download/{job_id}",
+        }
+    except Exception as exc:
+        temp_raw_path.unlink(missing_ok=True)
+        purge_ephemeral_job(job_id)
+        raise HTTPException(status_code=500, detail=f"Failed to process Excel workbook: {str(exc)}")
+
+@app.post("/api/missing-items/fetch", dependencies=[Depends(require_team_auth)])
+async def start_missing_items_fetch(req: FetchBrandRequest):
+    """Starts background Playwright portal automation to fetch, clean, and format report."""
+    cleanup_expired_ephemeral_files()
+    brand = req.brand.strip()
+    if not brand:
+        raise HTTPException(status_code=400, detail="Brand name is required.")
+
+    job = fetcher.start_fetch_job(brand)
+    return {
+        "job_id": job.id,
+        "brand": job.brand,
+        "status": job.status,
+        "step": job.step,
+    }
+
+@app.get("/api/missing-items/jobs/{job_id}", dependencies=[Depends(require_team_auth)])
+async def get_missing_items_job(job_id: str):
+    """Polls background portal fetch job progress and results."""
+    cleanup_expired_ephemeral_files()
+    job = fetcher.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found.")
+
+    res = job.to_dict()
+    if job.status == "success" and job.result:
+        res["download_url"] = f"/api/missing-items/download/{job_id}"
+    return res
+
+@app.get("/api/missing-items/download/{job_id}", dependencies=[Depends(require_team_auth)])
+async def download_missing_items_file(job_id: str):
+    """Streams the formatted vendor workbook and triggers ephemeral auto-purge."""
+    path = get_ephemeral_file(job_id)
+    if not path or not path.exists():
+        raise HTTPException(status_code=404, detail="Workbook expired or already purged from memory.")
+
+    filename = path.name
+
+    def file_iterator(file_path: Path):
+        try:
+            with open(file_path, "rb") as f:
+                while chunk := f.read(65536):
+                    yield chunk
+        finally:
+            # Ephemeral purge after serving
+            purge_ephemeral_job(job_id)
+
+    return StreamingResponse(
+        file_iterator(path),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Access-Control-Expose-Headers": "Content-Disposition",
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+        }
+    )
+

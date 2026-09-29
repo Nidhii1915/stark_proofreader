@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from docx import Document
+import openpyxl
 
 from backend.document_processor import DocxProcessor
 from backend.checker import GeminiProofreader
@@ -497,6 +498,47 @@ async def get_missing_items_status():
         "brands": COMMON_BRANDS,
         "privacy": "Zero-Trace Ephemeral Processing active. Workbooks auto-purged on download.",
         "message": "Automated Portal Fetch is ready." if is_configured else "Portal credentials not configured on server. Direct Excel Upload is available."
+    }
+
+@app.get("/api/missing-items/sample", dependencies=[Depends(require_team_auth)])
+async def get_sample_missing_items():
+    """Generates a sample raw Stark Premium export, cleans it according to vendor rules, and returns preview."""
+    cleanup_expired_ephemeral_files()
+    job_id = f"sample_{uuid.uuid4().hex[:8]}"
+    job_dir = EPHEMERAL_DIR / job_id
+    job_dir.mkdir(parents=True, exist_ok=True)
+    temp_raw = job_dir / "sample_raw_export.xlsx"
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Sheet1"
+    headers = [
+        "Brand", "Model#", "ItemTitle", "ItemStatus", "systemid", "stockqty",
+        "expectedinventorydate", "MissingUPC", "MissingItemDim", "MissingLongDescription",
+        "MissingImage", "MissingColor", "MissingCountryOfOrigin", "ZeroMSRP", "MissingBiCategory"
+    ]
+    ws.append(headers)
+    ws.append(["Marc Jacobs", "MJ-101", "The Snapshot Crossbody Bag", "Active", "SYS101", 14, "2026-10-15", True, False, True, False, False, False, False, "CAT1"])
+    ws.append(["Marc Jacobs", "MJ-102", "The Leather Tote Bag Medium", "Active", "SYS102", 8, "2026-10-18", False, True, False, False, True, False, False, "CAT2"])
+    ws.append(["Marc Jacobs", "MJ-103", "The J Marc Shoulder Bag", "Active", "SYS103", 20, "", True, True, False, False, False, True, False, ""])
+    ws.append(["Marc Jacobs", "MJ-104", "The Jacquard Small Tote Bag", "Active", "SYS104", 5, "", False, False, True, False, False, False, False, ""])
+    ws.append(["Marc Jacobs", "MJ-105", "Standard Card Case (Complete Item)", "Active", "SYS105", 35, "", False, False, False, False, False, False, False, ""])
+    wb.save(str(temp_raw))
+
+    result = process_raw_workbook(temp_raw, "Marc Jacobs", job_id)
+    temp_raw.unlink(missing_ok=True)
+
+    return {
+        "success": True,
+        "job_id": job_id,
+        "brand": "Marc Jacobs",
+        "send_filename": result["send_filename"],
+        "source_rows": result["source_rows"],
+        "retained_rows": result["retained_rows"],
+        "deleted_rows": result["deleted_rows"],
+        "columns": result["columns"],
+        "preview_rows": result["preview_rows"],
+        "download_url": f"/api/missing-items/download/{job_id}",
     }
 
 @app.post("/api/missing-items/process-upload", dependencies=[Depends(require_team_auth)])

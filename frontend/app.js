@@ -1609,6 +1609,10 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         if (portalDot) portalDot.className = 'pulse-indicator-dot dot-warn';
         if (portalStatusText) portalStatusText.innerHTML = '<strong>Server Credentials Not Configured</strong> • Please use <strong>Direct Excel Upload</strong> below, or ask your administrator to set STARK_PREMIUM_EMAIL & STARK_PREMIUM_PASSWORD on server.';
+        // Auto-switch to Direct Excel Upload so users are not stranded on an unconfigured portal tab
+        if (window.starkMissingTab) {
+          window.starkMissingTab('upload');
+        }
       }
 
       if (starkBrandSuggestions && Array.isArray(data.brands)) {
@@ -1882,8 +1886,59 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    const initialMissingState = document.getElementById('initialMissingState');
+    if (initialMissingState) initialMissingState.classList.add('hidden');
+
     missingResultsArea.classList.remove('hidden');
     missingResultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  window.starkDisplayMissingResults = displayMissingResults;
+
+  async function loadSampleMissingReport() {
+    const btn = document.getElementById('btnTrySampleMissing');
+    const btn2 = document.getElementById('btnUploadSampleBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>Loading Sample...</span>';
+    }
+    if (btn2) {
+      btn2.disabled = true;
+      btn2.innerHTML = '<span>Loading Sample...</span>';
+    }
+    try {
+      const resp = await fetchWithAuth('/api/missing-items/sample');
+      if (!resp.ok) throw new Error('Could not load sample missing items report');
+      const data = await resp.json();
+      displayMissingResults(data);
+    } catch (err) {
+      alert('Sample Report Error: ' + err.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          <span>Try Sample Report</span>
+        `;
+      }
+      if (btn2) {
+        btn2.disabled = false;
+        btn2.innerHTML = '<span>Try With Sample Report</span>';
+      }
+    }
+  }
+
+  window.starkLoadSampleMissing = loadSampleMissingReport;
+  const btnTrySampleMissing = document.getElementById('btnTrySampleMissing');
+  if (btnTrySampleMissing) {
+    btnTrySampleMissing.addEventListener('click', loadSampleMissingReport);
+  }
+  const btnUploadSampleBtn = document.getElementById('btnUploadSampleBtn');
+  if (btnUploadSampleBtn) {
+    btnUploadSampleBtn.addEventListener('click', loadSampleMissingReport);
   }
 
   // Initialize

@@ -2494,3 +2494,77 @@ body.theme-dark .suggestion-card.card-accepted {
   font-weight: 600;
 }
 
+/* ==========================================================================
+   Missing Items Initial Empty Guidance State
+   ========================================================================== */
+
+.missing-empty-guidance {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.empty-guidance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.guidance-step-card {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.guidance-step-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.guidance-step-card.card-sample {
+  background: var(--brand-subtle);
+  border-color: var(--brand-border);
+}
+
+.guidance-step-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--brand-primary);
+  border: 1px solid var(--border-light);
+}
+
+.guidance-step-card h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.guidance-step-card p {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.guidance-step-card code {
+  background: var(--bg-card);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  border: 1px solid var(--border-light);
+}
+

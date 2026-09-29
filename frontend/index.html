@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23881337'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8' stroke='%23B4944C' stroke-width='2' fill='none'/></svg>">
-  <link rel="stylesheet" href="/static/style.css?v=stark10.0">
+  <link rel="stylesheet" href="/static/style.css?v=stark11.0">
 </head>
 <body class="theme-light">
 
@@ -317,6 +317,44 @@
         if (tUpload) tUpload.classList.remove('active');
         if (pFetch) pFetch.classList.remove('hidden');
         if (pUpload) pUpload.classList.add('hidden');
+      }
+    };
+
+    window.starkLoadSampleMissing = async function() {
+      const btn = document.getElementById('btnTrySampleMissing');
+      const btn2 = document.getElementById('btnUploadSampleBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>Loading Sample...</span>';
+      }
+      if (btn2) {
+        btn2.disabled = true;
+        btn2.innerHTML = '<span>Loading Sample...</span>';
+      }
+      try {
+        const tok = localStorage.getItem('stark_auth_token') || 'stark2026';
+        const resp = await fetch('/api/missing-items/sample', {
+          headers: {
+            'X-Team-Passcode': tok,
+            'Authorization': 'Bearer ' + tok
+          }
+        });
+        if (!resp.ok) throw new Error('Could not load sample report');
+        const data = await resp.json();
+        if (window.starkDisplayMissingResults) {
+          window.starkDisplayMissingResults(data);
+        }
+      } catch (err) {
+        alert('Sample Report Error: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg><span>Try Sample Report</span>';
+        }
+        if (btn2) {
+          btn2.disabled = false;
+          btn2.innerHTML = '<span>Try With Sample Report</span>';
+        }
       }
     };
   </script>
@@ -760,6 +798,14 @@
             </div>
 
             <div class="missing-header-right">
+              <button id="btnTrySampleMissing" class="btn btn-secondary btn-sm" title="Test with a realistic sample Missing Items export" onclick="window.starkLoadSampleMissing && window.starkLoadSampleMissing()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>Try Sample Report</span>
+              </button>
+
               <div class="privacy-shield-box" title="Confidentiality Guarantee">
                 <div class="shield-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -893,6 +939,34 @@
                   </svg>
                   <span>Clean & Format Vendor Workbook</span>
                 </button>
+
+                <button type="button" id="btnUploadSampleBtn" class="btn btn-secondary" onclick="window.starkLoadSampleMissing && window.starkLoadSampleMissing()">
+                  <span>Try With Sample Report</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- INITIAL GUIDANCE & WORKFLOW STATE (Visible before processing) -->
+            <div id="initialMissingState" class="missing-empty-guidance">
+              <div class="empty-guidance-grid">
+                <div class="guidance-step-card">
+                  <div class="guidance-step-badge">Recommended</div>
+                  <h4>Direct Excel Upload</h4>
+                  <p>Drop any raw <code>MissingItemDataReport.xlsx</code> downloaded from Stark into the box above. It automatically strips internal columns, expands dimensions, and aligns UPC to column D.</p>
+                </div>
+                <div class="guidance-step-card">
+                  <div class="guidance-step-badge">Cloud Security</div>
+                  <h4>Zero-Trace Confidentiality</h4>
+                  <p>All workbooks are processed in secure memory and auto-purged from the server immediately after download for total data privacy.</p>
+                </div>
+                <div class="guidance-step-card card-sample">
+                  <div class="guidance-step-badge">Instant Demo</div>
+                  <h4>See Cleaned Output</h4>
+                  <p>Want to see the cleaned vendor table & download file in action right now?</p>
+                  <button type="button" class="btn btn-primary btn-sm" style="margin-top: 6px;" onclick="window.starkLoadSampleMissing && window.starkLoadSampleMissing()">
+                    ⚡ Load Sample Report
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1060,6 +1134,6 @@
     </div>
   </div>
 
-  <script src="/static/app.js?v=stark10.0"></script>
+  <script src="/static/app.js?v=stark11.0"></script>
 </body>
 </html>

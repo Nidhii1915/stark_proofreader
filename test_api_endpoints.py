@@ -14,12 +14,16 @@ client = TestClient(app)
 
 print("Starting FastAPI endpoint tests...")
 
-# 1. Login with passcode 'stark2026'
+# 1. Login with various passcode formats
+for code in ["stark2026", "Stark2026", "stark 2026", "STARK2026", "stark-2026", " stark2026 "]:
+    resp = client.post("/api/verify-passcode", json={"passcode": code})
+    assert resp.status_code == 200, f"Passcode '{code}' failed: {resp.text}"
+
 login_resp = client.post("/api/auth/login", json={"passcode": "stark2026"})
 assert login_resp.status_code == 200, f"Login failed: {login_resp.text}"
 token = login_resp.json()["token"]
 headers = {"Authorization": f"Bearer {token}"}
-print("1. Authentication OK, token received!")
+print("1. Authentication OK, token received and all passcode formats verified!")
 
 # 2. Check /api/missing-items/status
 status_resp = client.get("/api/missing-items/status", headers=headers)

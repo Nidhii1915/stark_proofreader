@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23881337'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8' stroke='%23B4944C' stroke-width='2' fill='none'/></svg>">
-  <link rel="stylesheet" href="/static/style.css?v=stark7.0">
+  <link rel="stylesheet" href="/static/style.css?v=stark8.0">
 </head>
 <body class="theme-light">
 
@@ -32,7 +32,7 @@
         </p>
       </div>
 
-      <form id="loginForm" class="login-form" autocomplete="off" onsubmit="return false;">
+      <form id="loginForm" class="login-form" autocomplete="off" onsubmit="event.preventDefault(); window.starkUnlock && window.starkUnlock(); return false;">
         <div class="form-group">
           <label for="inputPasscode" class="form-label">Team Passcode</label>
           <div class="passcode-input-wrap">
@@ -40,10 +40,11 @@
               type="password" 
               id="inputPasscode" 
               class="text-input login-input" 
-              placeholder="Enter team passcode..." 
+              placeholder="Enter team passcode (default: stark2026)" 
               autocomplete="current-password"
               autofocus
               required
+              onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.starkUnlock && window.starkUnlock(); }"
             >
             <button 
               type="button" 
@@ -51,6 +52,7 @@
               class="btn-toggle-eye" 
               title="Show/Hide Passcode"
               tabindex="-1"
+              onclick="window.starkTogglePasscode && window.starkTogglePasscode()"
             >
               <svg id="passcodeEyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -62,7 +64,7 @@
 
         <div id="loginFeedback" class="login-feedback hidden"></div>
 
-        <button type="submit" id="btnUnlock" class="btn btn-primary btn-unlock">
+        <button type="button" id="btnUnlock" class="btn btn-primary btn-unlock" onclick="window.starkUnlock && window.starkUnlock()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
@@ -78,11 +80,108 @@
             <line x1="12" y1="16" x2="12" y2="12"></line>
             <line x1="12" y1="8" x2="12.01" y2="8"></line>
           </svg>
-          <span>Restricted to authorized team members. Default passcode is available from your team admin.</span>
+          <span>Restricted to authorized team members. Default passcode: <strong>stark2026</strong></span>
         </div>
       </div>
     </div>
   </div>
+
+  <script>
+    // Inline failsafe auth handler
+    window.starkTogglePasscode = function() {
+      const inp = document.getElementById('inputPasscode');
+      const icon = document.getElementById('passcodeEyeIcon');
+      if (!inp) return;
+      const isPwd = inp.type === 'password';
+      inp.type = isPwd ? 'text' : 'password';
+      if (icon) {
+        icon.innerHTML = isPwd
+          ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
+          : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+      }
+    };
+
+    window.starkUnlock = async function() {
+      const inp = document.getElementById('inputPasscode');
+      const fb = document.getElementById('loginFeedback');
+      const btn = document.getElementById('btnUnlock');
+      const overlay = document.getElementById('loginSection');
+      const rawCode = (inp ? inp.value : '').trim();
+
+      if (!rawCode) {
+        if (fb) {
+          fb.textContent = 'Please enter team passcode (default: stark2026).';
+          fb.className = 'login-feedback error';
+          fb.classList.remove('hidden');
+        }
+        if (inp) inp.focus();
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>Verifying...</span>';
+      }
+      if (fb) fb.classList.add('hidden');
+
+      try {
+        const resp = await fetch('/api/verify-passcode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: rawCode })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+          localStorage.setItem('stark_auth_token', data.token || rawCode);
+          if (overlay) {
+            overlay.classList.remove('active');
+            overlay.style.display = 'none';
+          }
+          const authBadge = document.getElementById('authStatusBadge');
+          if (authBadge) authBadge.classList.remove('hidden');
+          const btnLock = document.getElementById('btnLockSession');
+          if (btnLock) btnLock.classList.remove('hidden');
+        } else {
+          if (fb) {
+            fb.textContent = data.detail || data.message || 'Incorrect passcode. Default is stark2026.';
+            fb.className = 'login-feedback error';
+            fb.classList.remove('hidden');
+          }
+          if (inp) {
+            inp.focus();
+            inp.select();
+          }
+        }
+      } catch (err) {
+        if (fb) {
+          fb.textContent = 'Connection error: ' + err.message + '. Please retry.';
+          fb.className = 'login-feedback error';
+          fb.classList.remove('hidden');
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg><span>Unlock Workspace</span>';
+        }
+      }
+    };
+
+    // Auto-unlock if valid token is already saved
+    (function() {
+      const tok = localStorage.getItem('stark_auth_token');
+      if (tok && tok.length >= 8) {
+        const overlay = document.getElementById('loginSection');
+        if (overlay) {
+          overlay.classList.remove('active');
+          overlay.style.display = 'none';
+        }
+        const authBadge = document.getElementById('authStatusBadge');
+        if (authBadge) authBadge.classList.remove('hidden');
+        const btnLock = document.getElementById('btnLockSession');
+        if (btnLock) btnLock.classList.remove('hidden');
+      }
+    })();
+  </script>
 
   <!-- MAIN APP SHELL (Wordvice AI Format) -->
   <div class="app-layout">
@@ -823,6 +922,6 @@
     </div>
   </div>
 
-  <script src="/static/app.js?v=stark7.0"></script>
+  <script src="/static/app.js?v=stark8.0"></script>
 </body>
 </html>

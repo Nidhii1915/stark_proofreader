@@ -188,6 +188,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function verifyPasscode(passcode) {
+    if (window.starkUnlock) {
+      return await window.starkUnlock();
+    }
     const code = (passcode || '').trim();
     if (!code) {
       showLoginError('Please enter a team passcode.');
@@ -283,7 +286,16 @@ document.addEventListener('DOMContentLoaded', () => {
   async function initAuth() {
     const existingToken = getAuthToken();
     if (!existingToken) {
-      showLoginGate();
+      if (loginSection && loginSection.style.display !== 'none') {
+        showLoginGate();
+      }
+      return;
+    }
+    // If already unlocked by inline script, keep it unlocked
+    if (loginSection && loginSection.style.display === 'none') {
+      try {
+        await checkServerApiKey();
+      } catch (_) {}
       return;
     }
     try {

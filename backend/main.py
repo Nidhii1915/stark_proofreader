@@ -133,9 +133,17 @@ def is_valid_passcode(passcode: Optional[str]) -> bool:
         return False
     return hmac.compare_digest(passcode.strip(), TEAM_PASSCODE)
 
+def is_valid_passcode_or_token(val: Optional[str]) -> bool:
+    """Verifies against either the configured passcode or a valid session token."""
+    if not val or not isinstance(val, str):
+        return False
+    v = val.strip()
+    return is_valid_passcode(v) or is_valid_token(v)
+
 async def require_team_auth(
     authorization: Optional[str] = Header(None),
-    x_stark_token: Optional[str] = Header(None)
+    x_stark_token: Optional[str] = Header(None),
+    x_team_passcode: Optional[str] = Header(None),
 ):
     """FastAPI dependency to protect endpoints with team authentication."""
     token = None
@@ -143,8 +151,10 @@ async def require_team_auth(
         token = authorization[7:].strip()
     elif x_stark_token:
         token = x_stark_token.strip()
+    elif x_team_passcode:
+        token = x_team_passcode.strip()
 
-    if not is_valid_token(token):
+    if not is_valid_passcode_or_token(token):
         raise HTTPException(
             status_code=401,
             detail="Authentication required or session expired. Please enter the team passcode."
@@ -157,7 +167,8 @@ class LoginRequest(BaseModel):
 @app.get("/api/auth/status")
 async def get_auth_status(
     authorization: Optional[str] = Header(None),
-    x_stark_token: Optional[str] = Header(None)
+    x_stark_token: Optional[str] = Header(None),
+    x_team_passcode: Optional[str] = Header(None),
 ):
     """Checks whether the client has an active authenticated session."""
     token = None
@@ -165,33 +176,41 @@ async def get_auth_status(
         token = authorization[7:].strip()
     elif x_stark_token:
         token = x_stark_token.strip()
+    elif x_team_passcode:
+        token = x_team_passcode.strip()
 
     return {
         "auth_required": True,
-        "authenticated": is_valid_token(token)
+        "authenticated": is_valid_passcode_or_token(token)
     }
 
 @app.post("/api/auth/login")
 @app.post("/api/verify-passcode")
 async def auth_login(req: LoginRequest):
-    """Validates the team passcode and issues a secure session token."""
-    if is_valid_passcode(req.passcode):
+    """Validates the team passcode or existing session token and issues a secure session token."""
+    if is_valid_passcode_or_token(req.passcode):
         return {
             "success": True,
             "token": get_expected_token(),
-            "message": "Access granted to Stark Proofreader."
+            "message": "Access granted to Stark Suite."
         }
     raise HTTPException(
         status_code=401,
         detail="Incorrect team passcode. Please try again or check with your team lead."
     )
 
-@app.get("/api/config", dependencies=[Depends(require_team_auth)])
-async def get_config():
+@app.get("/api/key-status")
+@app.get("/api/config")
+async def get_config(
+    authorization: Optional[str] = Header(None),
+    x_stark_token: Optional[str] = Header(None),
+    x_team_passcode: Optional[str] = Header(None),
+):
     raw = os.getenv("GEMINI_API_KEY", "").strip().strip("'\"")
     has_key = bool(raw and len(raw) > 20 and raw != "GEMINI_API_KEY" and not raw.startswith("your_"))
     return {
         "has_server_key": has_key,
+        "server_has_key": has_key,
         "default_model": "gemini-3.5-flash-lite"
     }
 

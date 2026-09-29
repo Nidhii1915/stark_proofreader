@@ -157,8 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return resp;
   }
 
+  const fetchWithAuth = authFetch;
+
   function showLoginGate(feedbackMsg = '') {
     if (loginSection) {
+      loginSection.style.display = 'flex';
       loginSection.classList.add('active');
     }
     if (feedbackMsg && loginFeedback) {
@@ -177,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function unlockWorkspace() {
     if (loginSection) {
       loginSection.classList.remove('active');
+      loginSection.style.display = 'none';
     }
     if (authStatusBadge) authStatusBadge.classList.remove('hidden');
     if (btnLockSession) btnLockSession.classList.remove('hidden');
@@ -184,7 +188,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function verifyPasscode(passcode) {
-    if (!passcode) {
+    const code = (passcode || '').trim();
+    if (!code) {
       showLoginError('Please enter a team passcode.');
       return false;
     }
@@ -196,16 +201,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const resp = await fetch('/api/verify-passcode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passcode: passcode.trim() })
+        body: JSON.stringify({ passcode: code })
       });
       const data = await resp.json();
       if (resp.ok && data.success) {
-        setAuthToken(data.token || passcode.trim());
+        setAuthToken(data.token || code);
         unlockWorkspace();
-        await checkServerApiKey();
+        try {
+          await checkServerApiKey();
+        } catch (_) {}
         return true;
       } else {
-        showLoginError(data.detail || data.message || 'Incorrect passcode. Please check with your team lead.');
+        showLoginError(data.detail || data.message || 'Incorrect passcode. Default is stark2026.');
         return false;
       }
     } catch (err) {
@@ -240,7 +247,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const code = inputPasscode.value;
+      const code = inputPasscode ? inputPasscode.value : '';
+      await verifyPasscode(code);
+    });
+  }
+
+  if (btnUnlock) {
+    btnUnlock.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const code = inputPasscode ? inputPasscode.value : '';
       await verifyPasscode(code);
     });
   }
@@ -279,10 +294,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (resp.ok) {
         unlockWorkspace();
-        await checkServerApiKey();
+        try {
+          await checkServerApiKey();
+        } catch (_) {}
       } else {
         clearAuthToken();
-        showLoginGate('Session expired. Please enter passcode.');
+        showLoginGate();
       }
     } catch {
       unlockWorkspace();

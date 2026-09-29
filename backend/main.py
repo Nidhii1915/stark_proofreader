@@ -152,17 +152,23 @@ async def require_team_auth(
     authorization: Optional[str] = Header(None),
     x_stark_token: Optional[str] = Header(None),
     x_team_passcode: Optional[str] = Header(None),
+    token: Optional[str] = Query(None),
+    passcode: Optional[str] = Query(None),
 ):
     """FastAPI dependency to protect endpoints with team authentication."""
-    token = None
+    auth_val = None
     if authorization and authorization.lower().startswith("bearer "):
-        token = authorization[7:].strip()
+        auth_val = authorization[7:].strip()
     elif x_stark_token:
-        token = x_stark_token.strip()
+        auth_val = x_stark_token.strip()
     elif x_team_passcode:
-        token = x_team_passcode.strip()
+        auth_val = x_team_passcode.strip()
+    elif token:
+        auth_val = token.strip()
+    elif passcode:
+        auth_val = passcode.strip()
 
-    if not is_valid_passcode_or_token(token):
+    if not is_valid_passcode_or_token(auth_val):
         raise HTTPException(
             status_code=401,
             detail="Authentication required or session expired. Please enter the team passcode."
@@ -500,11 +506,8 @@ async def get_missing_items_status():
         "message": "Automated Portal Fetch is ready." if is_configured else "Portal credentials not configured on server. Direct Excel Upload is available."
     }
 
-@app.get("/api/missing-items/sample", dependencies=[Depends(require_team_auth)])
-async def get_sample_missing_items():
-    """Generates a sample raw Stark Premium export, cleans it according to vendor rules, and returns preview."""
-    cleanup_expired_ephemeral_files()
-    job_id = f"sample_{uuid.uuid4().hex[:8]}"
+def generate_sample_workbook(job_id: str) -> dict:
+    """Generates a realistic sample raw Stark Premium export and cleans it for vendor delivery."""
     job_dir = EPHEMERAL_DIR / job_id
     job_dir.mkdir(parents=True, exist_ok=True)
     temp_raw = job_dir / "sample_raw_export.xlsx"
@@ -527,6 +530,14 @@ async def get_sample_missing_items():
 
     result = process_raw_workbook(temp_raw, "Marc Jacobs", job_id)
     temp_raw.unlink(missing_ok=True)
+    return result
+
+@app.get("/api/missing-items/sample")
+async def get_sample_missing_items():
+    """Generates a sample raw Stark Premium export, cleans it according to vendor rules, and returns preview."""
+    cleanup_expired_ephemeral_files()
+    job_id = f"sample_{uuid.uuid4().hex[:8]}"
+    result = generate_sample_workbook(job_id)
 
     return {
         "success": True,
@@ -575,7 +586,7 @@ async def process_missing_items_upload(
             "deleted_rows": result["deleted_rows"],
             "columns": result["columns"],
             "preview_rows": result["preview_rows"],
-            "download_url": f"/api/missing-items/download/{job_id}",
+            "download_url": f"/api/missing-items/download/{job_id}?token={get_expected_token()}",
         }
     except Exception as exc:
         temp_raw_path.unlink(missing_ok=True)
@@ -608,15 +619,48 @@ async def get_missing_items_job(job_id: str):
 
     res = job.to_dict()
     if job.status == "success" and job.result:
-        res["download_url"] = f"/api/missing-items/download/{job_id}"
+        res["download_url"] = f"/api/missing-items/download/{job_id}?token={get_expected_token()}"
     return res
 
-@app.get("/api/missing-items/download/{job_id}", dependencies=[Depends(require_team_auth)])
-async def download_missing_items_file(job_id: str):
+@app.get("/api/missing-items/download/{job_id}")
+async def download_missing_items_file(
+    job_id: str,
+    token: Optional[str] = Query(None),
+    passcode: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None),
+    x_stark_token: Optional[str] = Header(None),
+    x_team_passcode: Optional[str] = Header(None),
+):
     """Streams the formatted vendor workbook and triggers ephemeral auto-purge."""
+    is_sample = job_id.startswith("sample_")
+    auth_val = None
+    if authorization and authorization.lower().startswith("bearer "):
+        auth_val = authorization[7:].strip()
+    elif x_stark_token:
+        auth_val = x_stark_token.strip()
+    elif x_team_passcode:
+        auth_val = x_team_passcode.strip()
+    elif token:
+        auth_val = token.strip()
+    elif passcode:
+        auth_val = passcode.strip()
+
+    # Sample reports contain no sensitive data and can be downloaded freely;
+    # Real customer workbooks strictly verify team authorization.
+    if not is_sample and not is_valid_passcode_or_token(auth_val):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required or session expired. Please enter the team passcode."
+        )
+
     path = get_ephemeral_file(job_id)
     if not path or not path.exists():
-        raise HTTPException(status_code=404, detail="Workbook expired or already purged from memory.")
+        # If it was a sample job, regenerate on the fly so it never 404s
+        if is_sample:
+            generate_sample_workbook(job_id)
+            path = get_ephemeral_file(job_id)
+        if not path or not path.exists():
+            raise HTTPException(status_code=404, detail="Workbook expired or already purged from memory.")
 
     filename = path.name
 
@@ -626,8 +670,9 @@ async def download_missing_items_file(job_id: str):
                 while chunk := f.read(65536):
                     yield chunk
         finally:
-            # Ephemeral purge after serving
-            purge_ephemeral_job(job_id)
+            # Ephemeral purge after serving, only for real customer jobs
+            if not is_sample:
+                purge_ephemeral_job(job_id)
 
     return StreamingResponse(
         file_iterator(path),

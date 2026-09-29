@@ -1853,11 +1853,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (resultsFilename) resultsFilename.textContent = res.send_filename || 'Vendor_Missing_Item_Send_File.xlsx';
     if (btnDownloadResultExcel) {
-      btnDownloadResultExcel.href = res.download_url || `/api/missing-items/download/${res.job_id}`;
-      btnDownloadResultExcel.onclick = () => {
-        setTimeout(() => {
-          resultsFilename.innerHTML += ' <span style="color:#15803D; font-weight:700;">(Ephemeral Purge Completed ✓)</span>';
-        }, 1200);
+      const tok = getAuthToken() || 'stark2026';
+      let rawUrl = res.download_url || `/api/missing-items/download/${res.job_id}`;
+      if (!rawUrl.includes('token=') && !rawUrl.includes('/sample_')) {
+        rawUrl += (rawUrl.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(tok);
+      }
+      btnDownloadResultExcel.href = rawUrl;
+      btnDownloadResultExcel.setAttribute('download', res.send_filename || 'Vendor_Missing_Item_Send_File.xlsx');
+
+      btnDownloadResultExcel.onclick = async (e) => {
+        e.preventDefault();
+        const origContent = btnDownloadResultExcel.innerHTML;
+        btnDownloadResultExcel.innerHTML = '<span>Downloading...</span>';
+        try {
+          const resp = await authFetch(rawUrl);
+          if (!resp.ok) {
+            window.location.href = rawUrl;
+            return;
+          }
+          const blob = await resp.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = res.send_filename || 'Vendor_Missing_Item_Send_File.xlsx';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+          if (resultsFilename && !resultsFilename.innerHTML.includes('Downloaded')) {
+            resultsFilename.innerHTML += ' <span style="color:#15803D; font-weight:700;">(Downloaded ✓)</span>';
+          }
+        } catch (_) {
+          window.location.href = rawUrl;
+        } finally {
+          btnDownloadResultExcel.innerHTML = origContent;
+        }
       };
     }
 

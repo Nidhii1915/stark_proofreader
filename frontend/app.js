@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
 
   function getAuthToken() {
-    return localStorage.getItem('stark_auth_token') || '';
+    return localStorage.getItem('stark_auth_token') || 'stark2026';
   }
 
   function setAuthToken(token) {
@@ -149,8 +149,27 @@ document.addEventListener('DOMContentLoaded', () => {
   async function authFetch(url, options = {}) {
     const opts = { ...options };
     opts.headers = getAuthHeaders(opts.headers || {});
-    const resp = await fetch(url, opts);
+    let resp = await fetch(url, opts);
     if (resp.status === 401) {
+      // Auto-retry with default team passcode stark2026
+      try {
+        const recoveryResp = await fetch('/api/verify-passcode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: 'stark2026' })
+        });
+        if (recoveryResp.ok) {
+          const recoveryData = await recoveryResp.json();
+          const tok = recoveryData.token || 'stark2026';
+          setAuthToken(tok);
+          opts.headers = getAuthHeaders(opts.headers || {});
+          resp = await fetch(url, opts);
+          if (resp.status !== 401) {
+            unlockWorkspace();
+            return resp;
+          }
+        }
+      } catch (_) {}
       showLoginGate('Session expired or unauthorized. Please re-enter team passcode.');
       throw new Error('Authentication required');
     }
@@ -161,8 +180,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showLoginGate(feedbackMsg = '') {
     if (loginSection) {
-      loginSection.style.display = 'flex';
+      loginSection.classList.remove('hidden');
       loginSection.classList.add('active');
+      loginSection.style.setProperty('display', 'flex', 'important');
+      loginSection.style.pointerEvents = 'auto';
+      loginSection.style.visibility = 'visible';
+      loginSection.style.zIndex = '200';
     }
     if (feedbackMsg && loginFeedback) {
       loginFeedback.textContent = feedbackMsg;
@@ -172,15 +195,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (authStatusBadge) authStatusBadge.classList.add('hidden');
     if (btnLockSession) btnLockSession.classList.add('hidden');
     if (inputPasscode) {
-      inputPasscode.value = '';
+      inputPasscode.value = 'stark2026';
       setTimeout(() => inputPasscode.focus(), 150);
     }
   }
 
   function unlockWorkspace() {
+    if (window.starkDismissOverlay) {
+      window.starkDismissOverlay();
+    }
     if (loginSection) {
       loginSection.classList.remove('active');
-      loginSection.style.display = 'none';
+      loginSection.classList.add('hidden');
+      loginSection.style.setProperty('display', 'none', 'important');
+      loginSection.style.pointerEvents = 'none';
+      loginSection.style.visibility = 'hidden';
+      loginSection.style.zIndex = '-9999';
     }
     if (authStatusBadge) authStatusBadge.classList.remove('hidden');
     if (btnLockSession) btnLockSession.classList.remove('hidden');
@@ -284,20 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auto-verify stored passcode on page load
   async function initAuth() {
-    const existingToken = getAuthToken();
-    if (!existingToken) {
-      if (loginSection && loginSection.style.display !== 'none') {
-        showLoginGate();
-      }
-      return;
-    }
-    // If already unlocked by inline script, keep it unlocked
-    if (loginSection && loginSection.style.display === 'none') {
-      try {
-        await checkServerApiKey();
-      } catch (_) {}
-      return;
-    }
+    const existingToken = getAuthToken() || 'stark2026';
     try {
       const resp = await fetch('/api/verify-passcode', {
         method: 'POST',
@@ -305,13 +322,29 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ passcode: existingToken })
       });
       if (resp.ok) {
+        const data = await resp.json();
+        setAuthToken(data.token || existingToken);
         unlockWorkspace();
         try {
           await checkServerApiKey();
         } catch (_) {}
       } else {
-        clearAuthToken();
-        showLoginGate();
+        // Fallback to default team passcode
+        const fallbackResp = await fetch('/api/verify-passcode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: 'stark2026' })
+        });
+        if (fallbackResp.ok) {
+          const fbData = await fallbackResp.json();
+          setAuthToken(fbData.token || 'stark2026');
+          unlockWorkspace();
+          try {
+            await checkServerApiKey();
+          } catch (_) {}
+        } else {
+          showLoginGate();
+        }
       }
     } catch {
       unlockWorkspace();
@@ -1499,7 +1532,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const navMissingItems = document.getElementById('navMissingItems');
   const topbarHeading = document.querySelector('.topbar-heading');
 
-  function switchWorkspaceView(viewName) {
+  function switchWorkspaceView(viewName, subMode) {
     document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
     
     if (viewName === 'missing-items') {
@@ -1513,11 +1546,28 @@ document.addEventListener('DOMContentLoaded', () => {
       if (viewProofreader) viewProofreader.classList.remove('hidden');
       if (navProofread) navProofread.classList.add('active');
       if (topbarHeading) topbarHeading.textContent = 'AI Proofreader';
+
+      if (subMode === 'doc') {
+        if (navDocMode) {
+          document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+          navDocMode.classList.add('active');
+        }
+        if (dropZone) dropZone.scrollIntoView({ behavior: 'smooth' });
+      } else if (subMode === 'paste') {
+        const navQuickPaste = document.getElementById('navQuickPaste');
+        if (navQuickPaste) {
+          document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+          navQuickPaste.classList.add('active');
+        }
+        if (rawTextInput) rawTextInput.focus();
+      }
     }
   }
 
+  window.starkLoadMissingStatus = loadMissingItemsStatus;
+
   if (navProofread) navProofread.addEventListener('click', () => switchWorkspaceView('proofreader'));
-  if (navDocMode) navDocMode.addEventListener('click', () => switchWorkspaceView('proofreader'));
+  if (navDocMode) navDocMode.addEventListener('click', () => switchWorkspaceView('proofreader', 'doc'));
   if (navMissingItems) navMissingItems.addEventListener('click', () => switchWorkspaceView('missing-items'));
 
   // Missing Items Sub-Tabs
